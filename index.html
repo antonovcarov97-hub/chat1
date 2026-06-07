@@ -1,4 +1,4 @@
-<!-- telegram.html -->
+<!-- telegram_full.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -28,7 +28,7 @@
             align-items:center;justify-content:space-between;border-bottom:1px solid #1c2733;
         }
         .header h1{font-size:20px;font-weight:600}
-        .header-actions{display:flex;gap:15px}
+        .header-actions{display:flex;gap:12px}
         .header-actions span{color:#5288c1;font-size:20px;cursor:pointer}
         
         .contacts-list{flex:1;overflow-y:auto}
@@ -47,8 +47,8 @@
             display:flex;align-items:center;justify-content:center;
             font-size:22px;font-weight:600;
         }
-        .avatar img{width:100%;height:100%;object-fit:cover}
-        .avatar .letter{position:absolute;color:#fff;font-weight:600}
+        .avatar img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
+        .avatar .letter{position:relative;z-index:1;color:#fff;font-weight:600}
         
         .contact-info{flex:1;min-width:0}
         .contact-row{display:flex;justify-content:space-between;align-items:baseline}
@@ -58,18 +58,11 @@
             font-size:14px;color:#7f8fa4;margin-top:2px;
             white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
         }
-        .group-badge{
-            font-size:10px;background:#5288c1;color:#fff;padding:1px 5px;
-            border-radius:6px;margin-left:4px;vertical-align:middle;
-        }
+        .group-badge{font-size:10px;background:#5288c1;color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px}
+        .channel-badge{font-size:10px;background:#f39c12;color:#fff;padding:1px 5px;border-radius:6px;margin-left:4px}
         
-        .system-msg{
-            text-align:center;padding:8px 20px;margin:5px 0;
-        }
-        .system-msg span{
-            background:#1c2733;color:#7f8fa4;font-size:13px;
-            padding:5px 12px;border-radius:12px;display:inline-block;
-        }
+        .system-msg{text-align:center;padding:8px 20px;margin:5px 0}
+        .system-msg span{background:#1c2733;color:#7f8fa4;font-size:13px;padding:5px 12px;border-radius:12px;display:inline-block}
         
         .empty{
             display:flex;flex-direction:column;align-items:center;
@@ -95,15 +88,15 @@
             display:flex;align-items:center;justify-content:center;
             font-size:17px;font-weight:600;
         }
-        .chat-avatar img{width:100%;height:100%;object-fit:cover}
-        .chat-avatar .letter{position:absolute;color:#fff}
+        .chat-avatar img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
+        .chat-avatar .letter{position:relative;z-index:1;color:#fff}
         .chat-name{font-size:16px;font-weight:600}
         .chat-status{font-size:11px;color:#5288c1}
         
         .messages{flex:1;overflow-y:auto;padding:10px 12px}
         .messages::-webkit-scrollbar{width:0}
         
-        .msg{display:flex;margin:1px 0;align-items:flex-end;gap:4px}
+        .msg{display:flex;margin:3px 0;align-items:flex-end;gap:4px}
         .msg.in{justify-content:flex-start}
         .msg.out{justify-content:flex-end}
         
@@ -116,21 +109,23 @@
         
         .bubble{
             max-width:70%;padding:7px 10px;border-radius:10px;
-            font-size:15px;word-wrap:break-word;
+            font-size:15px;word-wrap:break-word;overflow:hidden;
         }
         .in .bubble{background:#182533;border-bottom-left-radius:2px}
         .out .bubble{background:#2b5278;border-bottom-right-radius:2px}
         
+        .bubble img{max-width:100%;border-radius:8px;margin:5px 0;display:block}
+        .bubble video{max-width:100%;border-radius:8px;margin:5px 0}
+        .bubble audio{width:200px;margin:5px 0}
+        
         .msg-sender{font-size:11px;color:#5288c1;margin-bottom:1px}
-        .msg-time{
-            font-size:10px;color:rgba(255,255,255,0.4);
-            text-align:right;margin-top:1px;
-        }
+        .msg-time{font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:3px}
         
         .input-bar{
             background:#17212b;padding:6px 10px;display:flex;
             align-items:center;gap:8px;border-top:1px solid #1c2733;
         }
+        .attach-btn{color:#7f8fa4;font-size:22px;cursor:pointer}
         .input-bar input{
             flex:1;background:#242f3d;border:none;border-radius:18px;
             padding:9px 14px;color:#fff;font-size:15px;outline:none;
@@ -153,25 +148,39 @@
             display:flex;align-items:center;justify-content:center;
             font-size:28px;margin-bottom:12px;
         }
+        
+        /* Меню действий */
+        .action-menu{
+            position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+            background:#17212b;border-radius:15px;padding:10px;
+            display:none;gap:15px;z-index:50;
+        }
+        .action-menu.show{display:flex}
+        .action-item{
+            text-align:center;color:#fff;font-size:12px;cursor:pointer;
+            padding:8px 12px;border-radius:10px;
+        }
+        .action-item:hover{background:#242f3d}
+        .action-item .icon{font-size:28px;margin-bottom:3px}
     </style>
 </head>
 <body>
     <div class="app">
-        <!-- ВСЕ ЧАТЫ -->
         <div class="screen-contacts" id="contactsScreen">
             <div class="header">
                 <h1>Все чаты</h1>
+                <div class="header-actions">
+                    <span onclick="refreshAll()">🔄</span>
+                </div>
             </div>
             <div class="contacts-list" id="contactsList">
                 <div class="empty">
                     <div class="icon">💬</div>
-                    <p>Напишите боту</p>
-                    <p style="font-size:13px;margin-top:3px">@Artem_Komp_bot</p>
+                    <p>Напишите боту @Artem_Komp_bot</p>
                 </div>
             </div>
         </div>
         
-        <!-- ЧАТ -->
         <div class="screen-chat" id="chatScreen">
             <div class="chat-header">
                 <div class="back" onclick="closeChat()">←</div>
@@ -191,19 +200,52 @@
                 </div>
             </div>
             <div class="input-bar">
+                <span class="attach-btn" onclick="toggleMenu()">📎</span>
                 <input id="msgInput" placeholder="Сообщение" onkeypress="if(event.key==='Enter')sendMsg()">
                 <div class="send-btn" onclick="sendMsg()">➤</div>
             </div>
+            <div class="action-menu" id="actionMenu">
+                <div class="action-item" onclick="sendPhoto()"><div class="icon">🖼️</div>Фото</div>
+                <div class="action-item" onclick="sendVideo()"><div class="icon">🎬</div>Видео</div>
+                <div class="action-item" onclick="sendVoice()"><div class="icon">🎤</div>Голос</div>
+                <div class="action-item" onclick="sendFile()"><div class="icon">📁</div>Файл</div>
+            </div>
         </div>
     </div>
+
+    <input type="file" id="fileInput" style="display:none" accept="image/*,video/*,audio/*">
 
     <script>
         const T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
         const A="https://api.telegram.org/bot"+T;
         let chats={},cur=null,lid=0;
+        let fileType=null;
         
-        try{const d=JSON.parse(localStorage.getItem("tg_all"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
-        function save(){localStorage.setItem("tg_all",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
+        try{const d=JSON.parse(localStorage.getItem("tg_full"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
+        function save(){localStorage.setItem("tg_full",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
+        
+        function refreshAll(){lid=0;chats={};cur=null;save();showContacts();update()}
+        
+        // Загрузка аватарки
+        async function loadAvatar(chatId,imgEl,letterEl){
+            try{
+                const r=await fetch(A+"/getChat?chat_id="+chatId);
+                const d=await r.json();
+                if(!d.ok)return;
+                
+                const photo=d.result.photo;
+                if(photo){
+                    const fr=await fetch(A+"/getFile?file_id="+photo.small_file_id);
+                    const fd=await fr.json();
+                    if(fd.ok){
+                        const url="https://api.telegram.org/file/bot"+T+"/"+fd.result.file_path;
+                        imgEl.src=url;
+                        imgEl.style.display="block";
+                        letterEl.style.display="none";
+                    }
+                }
+            }catch(e){}
+        }
         
         function update(){
             fetch(A+"/getUpdates?offset="+(lid+1)+"&timeout=10")
@@ -211,46 +253,59 @@
                 if(d.ok&&d.result.length){
                     d.result.forEach(u=>{
                         lid=u.update_id;
-                        const m=u.message;
+                        const m=u.message||u.channel_post;
                         if(!m)return;
                         
                         const id=String(m.chat.id);
                         const isGroup=m.chat.type==="group"||m.chat.type==="supergroup";
+                        const isChannel=m.chat.type==="channel";
                         
                         if(!chats[id]){
                             chats[id]={
                                 user:{
                                     id:m.chat.id,
-                                    name:isGroup?(m.chat.title||"Группа"):(m.chat.first_name||"Контакт"),
-                                    isGroup:isGroup
+                                    name:isChannel?(m.chat.title||"Канал"):isGroup?(m.chat.title||"Группа"):(m.chat.first_name||"Контакт"),
+                                    isGroup:isGroup,isChannel:isChannel
                                 },
                                 msgs:[],members:1
                             };
-                            chats[id].msgs.push({
-                                text:isGroup?"👥 Группа \""+chats[id].user.name+"\"":"✅ Чат с "+chats[id].user.name,
-                                date:Math.floor(Date.now()/1000),type:"system"
-                            });
+                            loadAvatar(m.chat.id,
+                                document.getElementById("avimg_"+id),
+                                document.getElementById("avlet_"+id));
                         }
+                        
+                        // Обработка разных типов сообщений
+                        let msgData={date:m.date,type:"in"};
                         
                         if(m.text){
-                            const sender=isGroup?(m.from?.first_name||"Участник"):null;
-                            if(!chats[id].msgs.some(x=>x.text===m.text&&Math.abs(x.date-m.date)<2)){
-                                chats[id].msgs.push({
-                                    text:m.text,date:m.date,type:"in",
-                                    sender:sender
-                                });
-                            }
+                            msgData.text=m.text;
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||m.author_signature||"Админ"):null;
+                        }else if(m.photo){
+                            const photo=m.photo[m.photo.length-1];
+                            msgData.photo=photo.file_id;
+                            msgData.caption=m.caption||"";
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||"Админ"):null;
+                        }else if(m.video){
+                            msgData.video=m.video.file_id;
+                            msgData.caption=m.caption||"";
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||"Админ"):null;
+                        }else if(m.voice){
+                            msgData.voice=m.voice.file_id;
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||"Админ"):null;
+                        }else if(m.audio){
+                            msgData.audio=m.audio.file_id;
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||"Админ"):null;
+                        }else if(m.document){
+                            msgData.document=m.document.file_id;
+                            msgData.docName=m.document.file_name||"Файл";
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||"Админ"):null;
+                        }else if(m.sticker){
+                            msgData.sticker=m.sticker.file_id;
+                        }else{
+                            return;
                         }
                         
-                        if(m.new_chat_members){
-                            m.new_chat_members.forEach(mb=>{
-                                chats[id].msgs.push({
-                                    text:"👤 "+(mb.first_name||"Пользователь")+" присоединился",
-                                    date:Math.floor(Date.now()/1000),type:"system"
-                                });
-                            });
-                            chats[id].members+=m.new_chat_members.length;
-                        }
+                        chats[id].msgs.push(msgData);
                     });
                     save();showContacts();if(cur)showChat()
                 }
@@ -272,27 +327,45 @@
             let h="";
             ids.forEach(id=>{
                 const u=chats[id].user,m=chats[id].msgs;
-                const last=m.filter(x=>x.type!=="system").pop();
-                const isGroup=u.isGroup;
+                const last=m[m.length-1];
+                const lastText=last?(last.text||last.caption||(last.photo?"🖼️ Фото":last.video?"🎬 Видео":last.voice?"🎤 Голосовое":last.sticker?"😀 Стикер":"📎 Файл")):"";
+                const isGroup=u.isGroup,isChannel=u.isChannel;
+                let badge="";
+                if(isChannel)badge=' <span class="channel-badge">канал</span>';
+                else if(isGroup)badge=' <span class="group-badge">группа</span>';
+                
                 h+=`<div class="contact" onclick="openChat('${id}')">
-                    <div class="avatar">${isGroup?"👥":u.name[0].toUpperCase()}</div>
+                    <div class="avatar" id="av_${id}">
+                        <img id="avimg_${id}" style="display:none" onerror="this.style.display='none'">
+                        <span class="letter" id="avlet_${id}">${isChannel?"📢":isGroup?"👥":u.name[0].toUpperCase()}</span>
+                    </div>
                     <div class="contact-info">
                         <div class="contact-row">
-                            <div class="contact-name">${esc(u.name)}${isGroup?' <span class="group-badge">группа</span>':''}</div>
+                            <div class="contact-name">${esc(u.name)}${badge}</div>
                             <div class="contact-time">${last?new Date(last.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):""}</div>
                         </div>
-                        <div class="contact-msg">${last?esc(last.text.substring(0,30)):"Нет сообщений"}</div>
+                        <div class="contact-msg">${esc(lastText.substring(0,30))}</div>
                     </div>
                 </div>`;
             });
             c.innerHTML=h;
+            
+            // Загружаем аватарки
+            ids.forEach(id=>{
+                setTimeout(()=>{
+                    const img=document.getElementById("avimg_"+id);
+                    const letter=document.getElementById("avlet_"+id);
+                    if(img&&letter)loadAvatar(id,img,letter);
+                },500);
+            });
         }
         
         function openChat(id){
             cur=id;const u=chats[id].user;
-            document.getElementById("cAvatarLetter").textContent=u.isGroup?"👥":u.name[0].toUpperCase();
+            loadAvatar(id,document.getElementById("cAvatarImg"),document.getElementById("cAvatarLetter"));
+            document.getElementById("cAvatarLetter").textContent=u.isChannel?"📢":u.isGroup?"👥":u.name[0].toUpperCase();
             document.getElementById("cName").textContent=u.name;
-            document.getElementById("cStatus").textContent=u.isGroup?chats[id].members+" участников":"онлайн";
+            document.getElementById("cStatus").textContent=u.isChannel?"канал":u.isGroup?chats[id].members+" участников":"онлайн";
             document.getElementById("chatScreen").classList.add("open");
             document.getElementById("contactsScreen").classList.add("hidden");
             save();showChat();
@@ -305,24 +378,49 @@
             cur=null;save();showContacts();
         }
         
-        function showChat(){
+        async function getFileUrl(fileId){
+            const r=await fetch(A+"/getFile?file_id="+fileId);
+            const d=await r.json();
+            if(d.ok)return "https://api.telegram.org/file/bot"+T+"/"+d.result.file_path;
+            return null;
+        }
+        
+        async function showChat(){
             const c=document.getElementById("messages");
             if(!cur||!chats[cur])return;
             const msgs=chats[cur].msgs;
             if(!msgs.length){c.innerHTML='<div class="empty-chat"><div class="logo">✈️</div><div>Нет сообщений</div></div>';return}
             
             let h="";
-            msgs.forEach(m=>{
-                if(m.type==="system"){
-                    h+=`<div class="system-msg"><span>${m.text}</span></div>`;
-                }else{
-                    const t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
-                    const cls=m.type==="in"?"in":"out";
-                    const sender=m.sender?`<div class="msg-sender">${esc(m.sender)}</div>`:"";
-                    const avatar=m.sender?`<div class="msg-avatar">${m.sender[0].toUpperCase()}</div>`:"";
-                    h+=`<div class="msg ${cls}">${avatar}<div class="bubble">${sender}${esc(m.text)}<div class="msg-time">${t}</div></div></div>`;
+            for(const m of msgs){
+                const t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+                const cls=m.type==="in"?"in":"out";
+                const sender=m.sender?`<div class="msg-sender">${esc(m.sender)}</div>`:"";
+                const avatar=m.sender?`<div class="msg-avatar">${m.sender[0].toUpperCase()}</div>`:"";
+                
+                let content="";
+                if(m.text)content=esc(m.text);
+                else if(m.photo){
+                    const url=await getFileUrl(m.photo);
+                    content=(m.caption?esc(m.caption)+"<br>":"")+`<img src="${url}" loading="lazy">`;
+                }else if(m.video){
+                    const url=await getFileUrl(m.video);
+                    content=(m.caption?esc(m.caption)+"<br>":"")+`<video src="${url}" controls></video>`;
+                }else if(m.voice){
+                    const url=await getFileUrl(m.voice);
+                    content=`🎤 <audio src="${url}" controls></audio>`;
+                }else if(m.audio){
+                    const url=await getFileUrl(m.audio);
+                    content=`🎵 <audio src="${url}" controls></audio>`;
+                }else if(m.sticker){
+                    const url=await getFileUrl(m.sticker);
+                    content=`<img src="${url}" style="width:120px">`;
+                }else if(m.document){
+                    content=`📁 ${esc(m.docName||"Файл")}`;
                 }
-            });
+                
+                h+=`<div class="msg ${cls}">${avatar}<div class="bubble">${sender}${content}<div class="msg-time">${t}</div></div></div>`;
+            }
             c.innerHTML=h;c.scrollTop=c.scrollHeight
         }
         
@@ -336,6 +434,34 @@
                 if(d.ok){chats[cur].msgs.push({text:t,date:Math.floor(Date.now()/1000),type:"out"});save();showChat()}
             });
         }
+        
+        function toggleMenu(){
+            document.getElementById("actionMenu").classList.toggle("show");
+        }
+        
+        function sendPhoto(){fileType="photo";document.getElementById("fileInput").accept="image/*";document.getElementById("fileInput").click()}
+        function sendVideo(){fileType="video";document.getElementById("fileInput").accept="video/*";document.getElementById("fileInput").click()}
+        function sendVoice(){fileType="voice";document.getElementById("fileInput").accept="audio/*";document.getElementById("fileInput").click()}
+        function sendFile(){fileType="document";document.getElementById("fileInput").accept="*/*";document.getElementById("fileInput").click()}
+        
+        document.getElementById("fileInput").addEventListener("change",async function(){
+            if(!cur||!this.files.length)return;
+            const file=this.files[0];
+            const form=new FormData();
+            form.append(fileType,file);
+            form.append("chat_id",cur);
+            
+            try{
+                const r=await fetch(A+"/send"+fileType.charAt(0).toUpperCase()+fileType.slice(1),{
+                    method:"POST",body:form
+                });
+                const d=await r.json();
+                if(d.ok){update();showChat()}
+            }catch(e){}
+            
+            this.value="";
+            document.getElementById("actionMenu").classList.remove("show");
+        });
         
         function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
         
