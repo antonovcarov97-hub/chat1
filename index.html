@@ -17,7 +17,6 @@
             position:relative;overflow:hidden;
         }
         
-        /* Экран контактов */
         .screen-contacts{
             position:absolute;top:0;left:0;width:100%;height:100%;
             background:#0e1621;display:flex;flex-direction:column;
@@ -44,9 +43,16 @@
         .contact:active{background:#1e2c3a}
         .avatar{
             width:52px;height:52px;border-radius:50%;flex-shrink:0;
+            overflow:hidden;position:relative;
             background:linear-gradient(135deg,#5288c1,#6a5acd);
             display:flex;align-items:center;justify-content:center;
             font-size:22px;font-weight:600;
+        }
+        .avatar img{
+            width:100%;height:100%;object-fit:cover;
+        }
+        .avatar .letter{
+            position:absolute;color:#fff;font-weight:600;
         }
         .contact-info{flex:1;min-width:0}
         .contact-row{display:flex;justify-content:space-between;align-items:baseline}
@@ -71,7 +77,6 @@
         }
         .tab.active{color:#5288c1}
         
-        /* Экран чата */
         .screen-chat{
             position:absolute;top:0;left:100%;width:100%;height:100%;
             background:#0e1621;display:flex;flex-direction:column;
@@ -83,15 +88,16 @@
             background:#17212b;padding:8px 12px;display:flex;
             align-items:center;gap:8px;border-bottom:1px solid #1c2733;
         }
-        .back{
-            color:#5288c1;font-size:28px;cursor:pointer;width:30px;
-        }
+        .back{color:#5288c1;font-size:28px;cursor:pointer;width:30px}
         .chat-avatar{
             width:38px;height:38px;border-radius:50%;flex-shrink:0;
+            overflow:hidden;position:relative;
             background:linear-gradient(135deg,#5288c1,#6a5acd);
             display:flex;align-items:center;justify-content:center;
             font-size:17px;font-weight:600;
         }
+        .chat-avatar img{width:100%;height:100%;object-fit:cover}
+        .chat-avatar .letter{position:absolute;color:#fff}
         .chat-name{font-size:16px;font-weight:600}
         .chat-status{font-size:11px;color:#5288c1}
         
@@ -169,7 +175,10 @@
         <div class="screen-chat" id="chatScreen">
             <div class="chat-header">
                 <div class="back" onclick="closeChat()">←</div>
-                <div class="chat-avatar" id="cAvatar">A</div>
+                <div class="chat-avatar" id="cAvatar">
+                    <img id="cAvatarImg" style="display:none">
+                    <span class="letter" id="cAvatarLetter">A</span>
+                </div>
                 <div>
                     <div class="chat-name" id="cName">Антон</div>
                     <div class="chat-status">был(а) недавно</div>
@@ -193,8 +202,31 @@
         const A="https://api.telegram.org/bot"+T;
         let chats={},cur=null,lid=0;
         
-        try{const d=JSON.parse(localStorage.getItem("tg2"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
-        function save(){localStorage.setItem("tg2",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
+        try{const d=JSON.parse(localStorage.getItem("tg3"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
+        function save(){localStorage.setItem("tg3",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
+        
+        // Загрузка аватарки Telegram
+        async function loadAvatar(userId, imgElement, letterElement) {
+            try {
+                const resp = await fetch(A + "/getUserProfilePhotos?user_id=" + userId + "&limit=1");
+                const data = await resp.json();
+                
+                if (data.ok && data.result.photos.length > 0) {
+                    const fileId = data.result.photos[0][0].file_id;
+                    const fileResp = await fetch(A + "/getFile?file_id=" + fileId);
+                    const fileData = await fileResp.json();
+                    
+                    if (fileData.ok) {
+                        const filePath = fileData.result.file_path;
+                        const url = "https://api.telegram.org/file/bot" + T + "/" + filePath;
+                        
+                        imgElement.src = url;
+                        imgElement.style.display = "block";
+                        letterElement.style.display = "none";
+                    }
+                }
+            } catch(e) {}
+        }
         
         function update(){
             fetch(A+"/getUpdates?offset="+(lid+1)+"&timeout=10")
@@ -205,7 +237,19 @@
                         const m=u.message;
                         if(!m||!m.text)return;
                         const id=String(m.chat.id);
-                        if(!chats[id])chats[id]={user:{name:m.chat.first_name||"Контакт"},msgs:[]};
+                        
+                        if(!chats[id]){
+                            chats[id]={
+                                user:{
+                                    id: m.chat.id,
+                                    name: m.chat.first_name || "Контакт",
+                                    username: m.chat.username || ""
+                                },
+                                msgs:[],
+                                avatarLoaded: false
+                            };
+                        }
+                        
                         if(!chats[id].msgs.some(x=>x.text===m.text&&Math.abs(x.date-m.date)<2))
                             chats[id].msgs.push({text:m.text,date:m.date,type:"in"});
                     });
@@ -220,13 +264,21 @@
                 const ma=chats[a].msgs,mb=chats[b].msgs;
                 return (mb.length?mb[mb.length-1].date:0)-(ma.length?ma[ma.length-1].date:0)
             });
-            if(!ids.length){c.innerHTML='<div class="empty"><div class="icon">💬</div><p>Напишите боту</p><p style="font-size:13px;margin-top:3px">@Artem_Komp_bot</p></div>';return}
+            
+            if(!ids.length){
+                c.innerHTML='<div class="empty"><div class="icon">💬</div><p>Напишите боту</p><p style="font-size:13px;margin-top:3px">@Artem_Komp_bot</p></div>';
+                return;
+            }
+            
             let h="";
             ids.forEach(id=>{
                 const u=chats[id].user,m=chats[id].msgs;
                 const last=m.length?m[m.length-1]:null;
                 h+=`<div class="contact" onclick="openChat('${id}')">
-                    <div class="avatar">${u.name[0].toUpperCase()}</div>
+                    <div class="avatar" id="av_${id}">
+                        <img id="avimg_${id}" style="display:none" onerror="this.style.display='none';document.getElementById('avlet_${id}').style.display='block'">
+                        <span class="letter" id="avlet_${id}">${u.name[0].toUpperCase()}</span>
+                    </div>
                     <div class="contact-info">
                         <div class="contact-row">
                             <div class="contact-name">${esc(u.name)}</div>
@@ -237,12 +289,30 @@
                 </div>`;
             });
             c.innerHTML=h;
+            
+            // Загружаем аватарки
+            ids.forEach(id=>{
+                if(!chats[id].avatarLoaded && chats[id].user.id){
+                    loadAvatar(chats[id].user.id, 
+                        document.getElementById("avimg_"+id),
+                        document.getElementById("avlet_"+id));
+                    chats[id].avatarLoaded = true;
+                }
+            });
         }
         
         function openChat(id){
             cur=id;
             const u=chats[id].user;
-            document.getElementById("cAvatar").textContent=u.name[0].toUpperCase();
+            
+            // Загружаем аватарку для чата
+            if(u.id){
+                loadAvatar(u.id, 
+                    document.getElementById("cAvatarImg"),
+                    document.getElementById("cAvatarLetter"));
+            }
+            document.getElementById("cAvatarLetter").textContent = u.name[0].toUpperCase();
+            
             document.getElementById("cName").textContent=u.name;
             document.getElementById("chatScreen").classList.add("open");
             document.getElementById("contactsScreen").classList.add("hidden");
