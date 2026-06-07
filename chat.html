@@ -1,0 +1,294 @@
+<!-- telegram_mobile.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+            background:#000;display:flex;justify-content:center;align-items:center;
+            height:100vh;
+        }
+        .app{
+            width:100%;max-width:430px;height:100vh;background:#0e1621;
+            position:relative;overflow:hidden;
+        }
+        
+        /* Экран контактов */
+        .screen-contacts{
+            position:absolute;top:0;left:0;width:100%;height:100%;
+            background:#0e1621;display:flex;flex-direction:column;
+            transition:0.3s;
+        }
+        .screen-contacts.hidden{left:-100%}
+        
+        .header{
+            background:#17212b;padding:12px 16px;display:flex;
+            align-items:center;justify-content:space-between;
+            border-bottom:1px solid #1c2733;
+        }
+        .header h1{font-size:20px;font-weight:600}
+        .header span{color:#5288c1;font-size:22px}
+        
+        .contacts-list{flex:1;overflow-y:auto}
+        .contacts-list::-webkit-scrollbar{width:0}
+        
+        .contact{
+            padding:10px 14px;display:flex;align-items:center;gap:10px;
+            cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.02);
+            transition:0.15s;
+        }
+        .contact:active{background:#1e2c3a}
+        .avatar{
+            width:52px;height:52px;border-radius:50%;flex-shrink:0;
+            background:linear-gradient(135deg,#5288c1,#6a5acd);
+            display:flex;align-items:center;justify-content:center;
+            font-size:22px;font-weight:600;
+        }
+        .contact-info{flex:1;min-width:0}
+        .contact-row{display:flex;justify-content:space-between;align-items:baseline}
+        .contact-name{font-size:16px;font-weight:500}
+        .contact-time{font-size:12px;color:#7f8fa4}
+        .contact-msg{
+            font-size:14px;color:#7f8fa4;margin-top:2px;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        .empty{
+            display:flex;flex-direction:column;align-items:center;
+            justify-content:center;height:100%;color:#7f8fa4;text-align:center;
+        }
+        .empty .icon{font-size:50px;margin-bottom:10px}
+        
+        .tabs{
+            display:flex;background:#17212b;border-top:1px solid #1c2733;
+        }
+        .tab{
+            flex:1;text-align:center;padding:10px;color:#7f8fa4;
+            font-size:13px;cursor:pointer;
+        }
+        .tab.active{color:#5288c1}
+        
+        /* Экран чата */
+        .screen-chat{
+            position:absolute;top:0;left:100%;width:100%;height:100%;
+            background:#0e1621;display:flex;flex-direction:column;
+            transition:0.3s;
+        }
+        .screen-chat.open{left:0}
+        
+        .chat-header{
+            background:#17212b;padding:8px 12px;display:flex;
+            align-items:center;gap:8px;border-bottom:1px solid #1c2733;
+        }
+        .back{
+            color:#5288c1;font-size:28px;cursor:pointer;width:30px;
+        }
+        .chat-avatar{
+            width:38px;height:38px;border-radius:50%;flex-shrink:0;
+            background:linear-gradient(135deg,#5288c1,#6a5acd);
+            display:flex;align-items:center;justify-content:center;
+            font-size:17px;font-weight:600;
+        }
+        .chat-name{font-size:16px;font-weight:600}
+        .chat-status{font-size:11px;color:#5288c1}
+        
+        .messages{
+            flex:1;overflow-y:auto;padding:10px 12px;
+            display:flex;flex-direction:column;gap:2px;
+        }
+        .messages::-webkit-scrollbar{width:0}
+        
+        .msg{display:flex;margin:1px 0}
+        .msg.in{justify-content:flex-start}
+        .msg.out{justify-content:flex-end}
+        .bubble{
+            max-width:75%;padding:7px 10px;border-radius:10px;
+            font-size:15px;word-wrap:break-word;
+        }
+        .in .bubble{background:#182533;border-bottom-left-radius:2px}
+        .out .bubble{background:#2b5278;border-bottom-right-radius:2px}
+        .msg-time{
+            font-size:10px;color:rgba(255,255,255,0.4);
+            text-align:right;margin-top:1px;
+        }
+        
+        .input-bar{
+            background:#17212b;padding:6px 10px;display:flex;
+            align-items:center;gap:8px;border-top:1px solid #1c2733;
+        }
+        .input-bar input{
+            flex:1;background:#242f3d;border:none;border-radius:18px;
+            padding:9px 14px;color:#fff;font-size:15px;outline:none;
+        }
+        .input-bar input::placeholder{color:#7f8fa4}
+        .send-btn{
+            width:36px;height:36px;border-radius:50%;background:#5288c1;
+            border:none;color:#fff;font-size:16px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+        }
+        .send-btn:active{background:#6a9fd4}
+        
+        .empty-chat{
+            display:flex;flex-direction:column;align-items:center;
+            justify-content:center;height:100%;color:#7f8fa4;
+        }
+        .empty-chat .logo{
+            width:60px;height:60px;border-radius:50%;
+            background:linear-gradient(135deg,#5288c1,#6a5acd);
+            display:flex;align-items:center;justify-content:center;
+            font-size:28px;margin-bottom:12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- КОНТАКТЫ -->
+        <div class="screen-contacts" id="contactsScreen">
+            <div class="header">
+                <h1>Telegram</h1>
+                <span>🔍</span>
+            </div>
+            <div class="contacts-list" id="contactsList">
+                <div class="empty">
+                    <div class="icon">💬</div>
+                    <p>Напишите боту</p>
+                    <p style="font-size:13px;margin-top:3px">@Artem_Komp_bot</p>
+                </div>
+            </div>
+            <div class="tabs">
+                <div class="tab active">Чаты</div>
+                <div class="tab">Звонки</div>
+                <div class="tab">Люди</div>
+            </div>
+        </div>
+        
+        <!-- ЧАТ -->
+        <div class="screen-chat" id="chatScreen">
+            <div class="chat-header">
+                <div class="back" onclick="closeChat()">←</div>
+                <div class="chat-avatar" id="cAvatar">A</div>
+                <div>
+                    <div class="chat-name" id="cName">Антон</div>
+                    <div class="chat-status">был(а) недавно</div>
+                </div>
+            </div>
+            <div class="messages" id="messages">
+                <div class="empty-chat">
+                    <div class="logo">✈️</div>
+                    <div>Нет сообщений</div>
+                </div>
+            </div>
+            <div class="input-bar">
+                <input id="msgInput" placeholder="Сообщение" onkeypress="if(event.key==='Enter')sendMsg()">
+                <div class="send-btn" onclick="sendMsg()">➤</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
+        const A="https://api.telegram.org/bot"+T;
+        let chats={},cur=null,lid=0;
+        
+        try{const d=JSON.parse(localStorage.getItem("tg2"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
+        function save(){localStorage.setItem("tg2",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
+        
+        function update(){
+            fetch(A+"/getUpdates?offset="+(lid+1)+"&timeout=10")
+            .then(r=>r.json()).then(d=>{
+                if(d.ok&&d.result.length){
+                    d.result.forEach(u=>{
+                        lid=u.update_id;
+                        const m=u.message;
+                        if(!m||!m.text)return;
+                        const id=String(m.chat.id);
+                        if(!chats[id])chats[id]={user:{name:m.chat.first_name||"Контакт"},msgs:[]};
+                        if(!chats[id].msgs.some(x=>x.text===m.text&&Math.abs(x.date-m.date)<2))
+                            chats[id].msgs.push({text:m.text,date:m.date,type:"in"});
+                    });
+                    save();showContacts();if(cur)showChat()
+                }
+            }).catch(()=>{});
+        }
+        
+        function showContacts(){
+            const c=document.getElementById("contactsList");
+            const ids=Object.keys(chats).sort((a,b)=>{
+                const ma=chats[a].msgs,mb=chats[b].msgs;
+                return (mb.length?mb[mb.length-1].date:0)-(ma.length?ma[ma.length-1].date:0)
+            });
+            if(!ids.length){c.innerHTML='<div class="empty"><div class="icon">💬</div><p>Напишите боту</p><p style="font-size:13px;margin-top:3px">@Artem_Komp_bot</p></div>';return}
+            let h="";
+            ids.forEach(id=>{
+                const u=chats[id].user,m=chats[id].msgs;
+                const last=m.length?m[m.length-1]:null;
+                h+=`<div class="contact" onclick="openChat('${id}')">
+                    <div class="avatar">${u.name[0].toUpperCase()}</div>
+                    <div class="contact-info">
+                        <div class="contact-row">
+                            <div class="contact-name">${esc(u.name)}</div>
+                            <div class="contact-time">${last?new Date(last.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):""}</div>
+                        </div>
+                        <div class="contact-msg">${last?esc(last.text.substring(0,30)):"Нет сообщений"}</div>
+                    </div>
+                </div>`;
+            });
+            c.innerHTML=h;
+        }
+        
+        function openChat(id){
+            cur=id;
+            const u=chats[id].user;
+            document.getElementById("cAvatar").textContent=u.name[0].toUpperCase();
+            document.getElementById("cName").textContent=u.name;
+            document.getElementById("chatScreen").classList.add("open");
+            document.getElementById("contactsScreen").classList.add("hidden");
+            save();showChat();
+            setTimeout(()=>document.getElementById("msgInput").focus(),300);
+        }
+        
+        function closeChat(){
+            document.getElementById("chatScreen").classList.remove("open");
+            document.getElementById("contactsScreen").classList.remove("hidden");
+            cur=null;save();showContacts();
+        }
+        
+        function showChat(){
+            const c=document.getElementById("messages");
+            if(!cur||!chats[cur])return;
+            const msgs=chats[cur].msgs;
+            if(!msgs.length){c.innerHTML='<div class="empty-chat"><div class="logo">✈️</div><div>Нет сообщений</div></div>';return}
+            let h="";
+            msgs.forEach(m=>{
+                const t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+                const cls=m.type==="in"?"in":"out";
+                h+=`<div class="msg ${cls}"><div class="bubble">${esc(m.text)}<div class="msg-time">${t}</div></div></div>`;
+            });
+            c.innerHTML=h;c.scrollTop=c.scrollHeight
+        }
+        
+        function sendMsg(){
+            if(!cur)return;
+            const t=document.getElementById("msgInput").value.trim();
+            if(!t)return;
+            document.getElementById("msgInput").value="";
+            fetch(A+"/sendMessage",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({chat_id:parseInt(cur),text:t})
+            }).then(r=>r.json()).then(d=>{
+                if(d.ok){chats[cur].msgs.push({text:t,date:Math.floor(Date.now()/1000),type:"out"});save();showChat()}
+            });
+        }
+        
+        function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
+        
+        showContacts();
+        setInterval(update,2000);
+        update();
+    </script>
+</body>
+</html>
