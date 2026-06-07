@@ -19,15 +19,13 @@
         
         .screen-contacts{
             position:absolute;top:0;left:0;width:100%;height:100%;
-            background:#0e1621;display:flex;flex-direction:column;
-            transition:0.3s;
+            background:#0e1621;display:flex;flex-direction:column;transition:0.3s;
         }
         .screen-contacts.hidden{left:-100%}
         
         .header{
             background:#17212b;padding:12px 16px;display:flex;
-            align-items:center;justify-content:space-between;
-            border-bottom:1px solid #1c2733;
+            align-items:center;justify-content:space-between;border-bottom:1px solid #1c2733;
         }
         .header h1{font-size:20px;font-weight:600}
         .header span{color:#5288c1;font-size:22px}
@@ -37,10 +35,10 @@
         
         .contact{
             padding:10px 14px;display:flex;align-items:center;gap:10px;
-            cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.02);
-            transition:0.15s;
+            cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.02);transition:0.15s;
         }
         .contact:active{background:#1e2c3a}
+        
         .avatar{
             width:52px;height:52px;border-radius:50%;flex-shrink:0;
             overflow:hidden;position:relative;
@@ -48,12 +46,9 @@
             display:flex;align-items:center;justify-content:center;
             font-size:22px;font-weight:600;
         }
-        .avatar img{
-            width:100%;height:100%;object-fit:cover;
-        }
-        .avatar .letter{
-            position:absolute;color:#fff;font-weight:600;
-        }
+        .avatar img{width:100%;height:100%;object-fit:cover}
+        .avatar .letter{position:absolute;color:#fff;font-weight:600}
+        
         .contact-info{flex:1;min-width:0}
         .contact-row{display:flex;justify-content:space-between;align-items:baseline}
         .contact-name{font-size:16px;font-weight:500}
@@ -62,6 +57,17 @@
             font-size:14px;color:#7f8fa4;margin-top:2px;
             white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
         }
+        
+        /* Системное сообщение в чате */
+        .system-msg{
+            text-align:center;padding:8px 20px;margin:5px 0;
+        }
+        .system-msg span{
+            background:#1c2733;color:#7f8fa4;font-size:13px;
+            padding:5px 12px;border-radius:12px;display:inline-block;
+        }
+        .system-msg .blue{color:#5288c1;font-weight:500}
+        
         .empty{
             display:flex;flex-direction:column;align-items:center;
             justify-content:center;height:100%;color:#7f8fa4;text-align:center;
@@ -72,15 +78,13 @@
             display:flex;background:#17212b;border-top:1px solid #1c2733;
         }
         .tab{
-            flex:1;text-align:center;padding:10px;color:#7f8fa4;
-            font-size:13px;cursor:pointer;
+            flex:1;text-align:center;padding:10px;color:#7f8fa4;font-size:13px;cursor:pointer;
         }
         .tab.active{color:#5288c1}
         
         .screen-chat{
             position:absolute;top:0;left:100%;width:100%;height:100%;
-            background:#0e1621;display:flex;flex-direction:column;
-            transition:0.3s;
+            background:#0e1621;display:flex;flex-direction:column;transition:0.3s;
         }
         .screen-chat.open{left:0}
         
@@ -101,10 +105,7 @@
         .chat-name{font-size:16px;font-weight:600}
         .chat-status{font-size:11px;color:#5288c1}
         
-        .messages{
-            flex:1;overflow-y:auto;padding:10px 12px;
-            display:flex;flex-direction:column;gap:2px;
-        }
+        .messages{flex:1;overflow-y:auto;padding:10px 12px}
         .messages::-webkit-scrollbar{width:0}
         
         .msg{display:flex;margin:1px 0}
@@ -202,30 +203,31 @@
         const A="https://api.telegram.org/bot"+T;
         let chats={},cur=null,lid=0;
         
-        try{const d=JSON.parse(localStorage.getItem("tg3"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
-        function save(){localStorage.setItem("tg3",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
+        try{const d=JSON.parse(localStorage.getItem("tg4"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur}}catch(e){}
+        function save(){localStorage.setItem("tg4",JSON.stringify({chats:chats,lid:lid,cur:cur}))}
         
-        // Загрузка аватарки Telegram
-        async function loadAvatar(userId, imgElement, letterElement) {
-            try {
-                const resp = await fetch(A + "/getUserProfilePhotos?user_id=" + userId + "&limit=1");
-                const data = await resp.json();
-                
-                if (data.ok && data.result.photos.length > 0) {
-                    const fileId = data.result.photos[0][0].file_id;
-                    const fileResp = await fetch(A + "/getFile?file_id=" + fileId);
-                    const fileData = await fileResp.json();
-                    
-                    if (fileData.ok) {
-                        const filePath = fileData.result.file_path;
-                        const url = "https://api.telegram.org/file/bot" + T + "/" + filePath;
-                        
-                        imgElement.src = url;
-                        imgElement.style.display = "block";
-                        letterElement.style.display = "none";
+        async function loadAvatar(userId, img, letter){
+            try{
+                const r=await fetch(A+"/getUserProfilePhotos?user_id="+userId+"&limit=1");
+                const d=await r.json();
+                if(d.ok&&d.result.photos.length){
+                    const fr=await fetch(A+"/getFile?file_id="+d.result.photos[0][0].file_id);
+                    const fd=await fr.json();
+                    if(fd.ok){
+                        img.src="https://api.telegram.org/file/bot"+T+"/"+fd.result.file_path;
+                        img.style.display="block";
+                        letter.style.display="none";
                     }
                 }
-            } catch(e) {}
+            }catch(e){}
+        }
+        
+        function addSystemMessage(chatId, text){
+            if(!chats[chatId])return;
+            chats[chatId].msgs.push({
+                text:text,date:Math.floor(Date.now()/1000),type:"system"
+            });
+            save();
         }
         
         function update(){
@@ -235,23 +237,34 @@
                     d.result.forEach(u=>{
                         lid=u.update_id;
                         const m=u.message;
-                        if(!m||!m.text)return;
-                        const id=String(m.chat.id);
+                        if(!m)return;
                         
+                        const id=String(m.chat.id);
                         if(!chats[id]){
                             chats[id]={
                                 user:{
-                                    id: m.chat.id,
-                                    name: m.chat.first_name || "Контакт",
-                                    username: m.chat.username || ""
+                                    id:m.chat.id,
+                                    name:m.chat.first_name||"Контакт",
+                                    username:m.chat.username||""
                                 },
-                                msgs:[],
-                                avatarLoaded: false
+                                msgs:[],avatarLoaded:false
                             };
+                            // Системное сообщение о добавлении
+                            addSystemMessage(id, "✅ Вас добавили в чат с Антоном");
                         }
                         
-                        if(!chats[id].msgs.some(x=>x.text===m.text&&Math.abs(x.date-m.date)<2))
-                            chats[id].msgs.push({text:m.text,date:m.date,type:"in"});
+                        if(m.text){
+                            if(!chats[id].msgs.some(x=>x.text===m.text&&Math.abs(x.date-m.date)<2))
+                                chats[id].msgs.push({text:m.text,date:m.date,type:"in"});
+                        }
+                        
+                        // Новый участник в чате
+                        if(m.new_chat_members){
+                            m.new_chat_members.forEach(member=>{
+                                const name=member.first_name||"Пользователь";
+                                addSystemMessage(id, "👤 "+name+" присоединился к чату");
+                            });
+                        }
                     });
                     save();showContacts();if(cur)showChat()
                 }
@@ -273,10 +286,10 @@
             let h="";
             ids.forEach(id=>{
                 const u=chats[id].user,m=chats[id].msgs;
-                const last=m.length?m[m.length-1]:null;
+                const last=m.filter(x=>x.type!=="system").pop();
                 h+=`<div class="contact" onclick="openChat('${id}')">
                     <div class="avatar" id="av_${id}">
-                        <img id="avimg_${id}" style="display:none" onerror="this.style.display='none';document.getElementById('avlet_${id}').style.display='block'">
+                        <img id="avimg_${id}" style="display:none">
                         <span class="letter" id="avlet_${id}">${u.name[0].toUpperCase()}</span>
                     </div>
                     <div class="contact-info">
@@ -290,29 +303,18 @@
             });
             c.innerHTML=h;
             
-            // Загружаем аватарки
             ids.forEach(id=>{
-                if(!chats[id].avatarLoaded && chats[id].user.id){
-                    loadAvatar(chats[id].user.id, 
-                        document.getElementById("avimg_"+id),
-                        document.getElementById("avlet_"+id));
-                    chats[id].avatarLoaded = true;
+                if(!chats[id].avatarLoaded&&chats[id].user.id){
+                    loadAvatar(chats[id].user.id,document.getElementById("avimg_"+id),document.getElementById("avlet_"+id));
+                    chats[id].avatarLoaded=true;
                 }
             });
         }
         
         function openChat(id){
-            cur=id;
-            const u=chats[id].user;
-            
-            // Загружаем аватарку для чата
-            if(u.id){
-                loadAvatar(u.id, 
-                    document.getElementById("cAvatarImg"),
-                    document.getElementById("cAvatarLetter"));
-            }
-            document.getElementById("cAvatarLetter").textContent = u.name[0].toUpperCase();
-            
+            cur=id;const u=chats[id].user;
+            if(u.id)loadAvatar(u.id,document.getElementById("cAvatarImg"),document.getElementById("cAvatarLetter"));
+            document.getElementById("cAvatarLetter").textContent=u.name[0].toUpperCase();
             document.getElementById("cName").textContent=u.name;
             document.getElementById("chatScreen").classList.add("open");
             document.getElementById("contactsScreen").classList.add("hidden");
@@ -331,11 +333,16 @@
             if(!cur||!chats[cur])return;
             const msgs=chats[cur].msgs;
             if(!msgs.length){c.innerHTML='<div class="empty-chat"><div class="logo">✈️</div><div>Нет сообщений</div></div>';return}
+            
             let h="";
             msgs.forEach(m=>{
-                const t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
-                const cls=m.type==="in"?"in":"out";
-                h+=`<div class="msg ${cls}"><div class="bubble">${esc(m.text)}<div class="msg-time">${t}</div></div></div>`;
+                if(m.type==="system"){
+                    h+=`<div class="system-msg"><span>${m.text}</span></div>`;
+                }else{
+                    const t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+                    const cls=m.type==="in"?"in":"out";
+                    h+=`<div class="msg ${cls}"><div class="bubble">${esc(m.text)}<div class="msg-time">${t}</div></div></div>`;
+                }
             });
             c.innerHTML=h;c.scrollTop=c.scrollHeight
         }
@@ -345,20 +352,15 @@
             const t=document.getElementById("msgInput").value.trim();
             if(!t)return;
             document.getElementById("msgInput").value="";
-            fetch(A+"/sendMessage",{
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body:JSON.stringify({chat_id:parseInt(cur),text:t})
-            }).then(r=>r.json()).then(d=>{
+            fetch(A+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:parseInt(cur),text:t})})
+            .then(r=>r.json()).then(d=>{
                 if(d.ok){chats[cur].msgs.push({text:t,date:Math.floor(Date.now()/1000),type:"out"});save();showChat()}
             });
         }
         
         function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
         
-        showContacts();
-        setInterval(update,2000);
-        update();
+        showContacts();setInterval(update,2000);update();
     </script>
 </body>
 </html>
