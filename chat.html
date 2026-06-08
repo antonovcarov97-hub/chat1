@@ -29,12 +29,60 @@
     </div>
     <script>
         var T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
-        var A="https://api.telegram.org/bot"+T;
+        // Используем несколько API точек
+        var APIS=[
+            "https://api.telegram.org/bot"+T,
+            "https://149.154.167.220/bot"+T,
+            "https://149.154.167.99/bot"+T
+        ];
+        var apiIndex=0;
         var cid=null,msgs=[],lid=0;
         
-        try{var d=JSON.parse(localStorage.getItem("t"));if(d){msgs=d.msgs||[];lid=d.lid||0;cid=d.cid}}catch(e){}
+        try{var d=JSON.parse(localStorage.getItem("tc"));if(d){msgs=d.msgs||[];lid=d.lid||0;cid=d.cid}}catch(e){}
+        function save(){localStorage.setItem("tc",JSON.stringify({msgs:msgs,lid:lid,cid:cid}))}
         
-        function save(){localStorage.setItem("t",JSON.stringify({msgs:msgs,lid:lid,cid:cid}))}
+        function apiUrl(method){
+            return APIS[apiIndex]+"/"+method;
+        }
+        
+        function switchAPI(){
+            apiIndex=(apiIndex+1)%APIS.length;
+        }
+        
+        function apiGet(method,callback){
+            var x=new XMLHttpRequest();
+            x.open("GET",apiUrl(method));
+            x.timeout=10000;
+            x.onload=function(){
+                if(x.status==200){
+                    try{callback(JSON.parse(x.responseText))}catch(e){callback(null)}
+                }else{
+                    switchAPI();
+                    apiGet(method,callback);
+                }
+            };
+            x.onerror=function(){switchAPI();apiGet(method,callback)};
+            x.ontimeout=function(){switchAPI();apiGet(method,callback)};
+            x.send();
+        }
+        
+        function apiPost(method,data,callback){
+            var x=new XMLHttpRequest();
+            x.open("POST",apiUrl(method));
+            x.setRequestHeader("Content-Type","application/json");
+            x.timeout=10000;
+            x.onload=function(){
+                if(x.status==200){
+                    try{callback(JSON.parse(x.responseText))}catch(e){callback(null)}
+                }else{
+                    switchAPI();
+                    apiPost(method,data,callback);
+                }
+            };
+            x.onerror=function(){switchAPI();apiPost(method,data,callback)};
+            x.ontimeout=function(){switchAPI();apiPost(method,data,callback)};
+            x.send(JSON.stringify(data));
+        }
         
         function show(){
             var c=document.getElementById("msgs");
@@ -49,39 +97,31 @@
         }
         
         function update(){
-            var x=new XMLHttpRequest();
-            x.open("GET",A+"/getUpdates?offset="+(lid+1)+"&timeout=10");
-            x.onload=function(){
-                try{
-                    var d=JSON.parse(x.responseText);
-                    if(d.ok&&d.result.length){
-                        for(var i=0;i<d.result.length;i++){
-                            lid=d.result[i].update_id;
-                            var m=d.result[i].message;
-                            if(!m||!m.text)continue;
-                            cid=String(m.chat.id);
-                            msgs.push({text:m.text,date:m.date,type:"in"});
+            apiGet("getUpdates?offset="+(lid+1)+"&timeout=10",function(d){
+                if(d&&d.ok&&d.result.length){
+                    for(var i=0;i<d.result.length;i++){
+                        lid=d.result[i].update_id;
+                        var m=d.result[i].message;
+                        if(!m||!m.text)continue;
+                        cid=String(m.chat.id);
+                        var dup=false;
+                        for(var j=0;j<msgs.length;j++){
+                            if(msgs[j].text==m.text&&Math.abs(msgs[j].date-m.date)<2){dup=true;break}
                         }
-                        save();show()
+                        if(!dup){msgs.push({text:m.text,date:m.date,type:"in"});save();show()}
                     }
-                }catch(e){}
-            };
-            x.send()
+                }
+            });
         }
         
         function send(){
             var t=document.getElementById("inp").value.trim();
             if(!t)return;
-            if(!cid){alert("Сначала напишите боту @Artem_Komp_bot в Telegram!");return}
+            if(!cid){alert("Напишите боту @Artem_Komp_bot в Telegram!");return}
             document.getElementById("inp").value="";
-            var x=new XMLHttpRequest();
-            x.open("POST",A+"/sendMessage");
-            x.setRequestHeader("Content-Type","application/json");
-            x.onload=function(){
-                var d=JSON.parse(x.responseText);
-                if(d.ok){msgs.push({text:t,date:Math.floor(Date.now()/1000),type:"out"});save();show()}
-            };
-            x.send(JSON.stringify({chat_id:parseInt(cid),text:t}))
+            apiPost("sendMessage",{chat_id:parseInt(cid),text:t},function(d){
+                if(d&&d.ok){msgs.push({text:t,date:Math.floor(Date.now()/1000),type:"out"});save();show()}
+            });
         }
         
         show();setInterval(update,2000);update();
