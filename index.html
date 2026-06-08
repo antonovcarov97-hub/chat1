@@ -3,207 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache">
     <title>Telegram</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{
-            font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-            background:#fff;display:flex;justify-content:center;align-items:center;
-            height:100vh;user-select:none;-webkit-user-select:none;
-        }
-        .app{
-            width:100%;max-width:430px;height:100vh;
-            background:#fff url('https://i.pinimg.com/736x/3d/8c/2f/3d8c2f2c82c1c9ef1e27be645cd1aa17.jpg') center/cover fixed;
-            position:relative;overflow:hidden;
-        }
-        .app::before{
-            content:'';position:absolute;top:0;left:0;width:100%;height:100%;
-            background:rgba(255,255,255,0.92);z-index:0;
-        }
+        body{font-family:Arial,sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;height:100vh}
+        .app{width:100%;max-width:430px;height:100vh;background:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
         
-        .contacts-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;z-index:1}
+        .contacts-screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;background:#fff}
         .contacts-screen.hidden{left:-100%}
         
-        .header{background:rgba(255,255,255,0.95);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,0.08)}
-        .header h1{font-size:20px;font-weight:600;color:#000}
+        .header{background:#f5f5f5;padding:12px 16px;border-bottom:1px solid #ddd}
+        .header h1{font-size:20px;color:#000;margin:0}
         
-        .users-list{flex:1;overflow-y:auto;background:rgba(255,255,255,0.3)}
-        .user{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.04);background:rgba(255,255,255,0.7);margin:1px 8px;border-radius:12px}
-        .user:active{background:rgba(0,0,0,0.05)}
-        .user-avatar{width:52px;height:52px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4a90d9,#7b68ee);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#fff}
+        .users-list{flex:1;overflow-y:auto}
+        .user{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid #eee}
+        .user:active{background:#f0f0f0}
+        .avatar{width:48px;height:48px;border-radius:50%;background:#4a90d9;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;flex-shrink:0}
         .user-info{flex:1;min-width:0}
-        .user-top{display:flex;justify-content:space-between;align-items:baseline}
-        .user-name{font-size:16px;font-weight:500;color:#000}
-        .user-time{font-size:12px;color:#8e8e93}
-        .user-msg{font-size:14px;color:#8e8e93;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .tabs{display:flex;background:rgba(255,255,255,0.95);border-top:1px solid rgba(0,0,0,0.08)}
-        .tab{flex:1;text-align:center;padding:10px;color:#8e8e93;font-size:13px;cursor:pointer}
-        .tab.active{color:#4a90d9}
+        .user-name{font-size:15px;font-weight:500;color:#000}
+        .user-last{font-size:13px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .user-time{font-size:11px;color:#999}
         
-        .chat-screen{position:absolute;top:0;left:100%;width:100%;height:100%;display:flex;flex-direction:column;transition:0.3s;z-index:2}
+        .chat-screen{position:absolute;top:0;left:100%;width:100%;height:100%;display:flex;flex-direction:column;background:#fff}
         .chat-screen.open{left:0}
         
-        .chat-header{background:rgba(255,255,255,0.95);padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(0,0,0,0.08)}
-        .back-btn{color:#4a90d9;font-size:28px;cursor:pointer;width:32px;text-align:center}
-        .chat-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4a90d9,#7b68ee);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#fff}
-        .chat-header-info{flex:1}
+        .chat-header{background:#f5f5f5;padding:10px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #ddd}
+        .back-btn{color:#4a90d9;font-size:24px;cursor:pointer;font-weight:bold}
         .chat-name{font-size:16px;font-weight:600;color:#000}
-        .chat-status{font-size:12px;color:#4a90d9}
         
-        .messages{flex:1;overflow-y:auto;padding:10px 12px;background:rgba(255,255,255,0.3)}
-        .msg{display:flex;margin:2px 0;align-items:flex-end;gap:4px}
-        .msg.in{justify-content:flex-start}
-        .msg.out{justify-content:flex-end}
-        .msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4a90d9,#7b68ee);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
-        .bubble{max-width:75%;padding:8px 12px;border-radius:12px;font-size:16px;word-wrap:break-word;line-height:1.4}
-        .in .bubble{background:#e8e8e8;border-bottom-left-radius:2px;color:#000}
-        .out .bubble{background:#4a90d9;border-bottom-right-radius:2px;color:#fff}
-        .bubble img.sticker{width:120px;height:120px;display:block;margin:5px 0}
-        .bubble img.emoji{width:80px;height:80px}
-        .msg-sender{font-size:12px;color:#4a90d9;margin-bottom:2px}
-        .msg-time{font-size:11px;color:rgba(0,0,0,0.4);text-align:right;margin-top:3px}
-        .out .msg-time{color:rgba(255,255,255,0.7)}
+        .messages{flex:1;overflow-y:auto;padding:10px;background:#e5ddd5}
+        .msg{margin:5px 0}
+        .in .bubble{background:#fff;display:inline-block;max-width:75%;padding:8px 12px;border-radius:8px;font-size:15px;color:#000;word-wrap:break-word}
+        .out{text-align:right}
+        .out .bubble{background:#dcf8c6;display:inline-block;max-width:75%;padding:8px 12px;border-radius:8px;font-size:15px;color:#000;word-wrap:break-word}
+        .sender{font-size:11px;color:#4a90d9;margin-bottom:2px}
+        .time{font-size:10px;color:rgba(0,0,0,0.45);text-align:right;margin-top:2px}
+        .bubble img{max-width:200px;max-height:200px;border-radius:6px;display:block;margin:3px 0}
         
-        .input-bar{background:rgba(255,255,255,0.95);padding:8px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid rgba(0,0,0,0.08)}
-        .attach-btn{color:#4a90d9;font-size:24px;cursor:pointer;width:32px;text-align:center}
-        .msg-input{flex:1;background:#e8e8e8;border:none;border-radius:20px;padding:10px 14px;color:#000;font-size:16px;outline:none}
-        .msg-input::placeholder{color:#8e8e93}
-        .send-btn{width:38px;height:38px;border-radius:50%;background:#4a90d9;border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        .send-btn:active{background:#357abd}
+        .input-bar{background:#f5f5f5;padding:8px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid #ddd}
+        .input-bar input{flex:1;padding:10px;background:#fff;border:1px solid #ddd;border-radius:20px;font-size:15px;outline:none}
+        .send-btn{background:#4a90d9;color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
         
-        .sticker-panel{position:absolute;bottom:55px;left:0;width:100%;background:rgba(255,255,255,0.98);border-top:1px solid rgba(0,0,0,0.1);display:none;flex-wrap:wrap;padding:10px;gap:5px;max-height:200px;overflow-y:auto;z-index:10}
-        .sticker-panel.show{display:flex}
-        .sticker-item{width:70px;height:70px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px}
-        .sticker-item:hover{background:rgba(0,0,0,0.05)}
-        .sticker-item img{max-width:60px;max-height:60px}
-        .sticker-empty{width:100%;text-align:center;color:#8e8e93;padding:20px;font-size:14px}
-        
-        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#8e8e93;text-align:center;padding:20px}
-        .empty-icon{font-size:50px;margin-bottom:10px}
+        .empty{text-align:center;color:#999;padding:50px;font-size:15px}
     </style>
 </head>
 <body>
     <div class="app">
         <div class="contacts-screen" id="contacts">
             <div class="header"><h1>Telegram</h1></div>
-            <div class="users-list" id="users"><div class="empty"><div class="empty-icon">💬</div>Напишите боту<br>@Artem_Komp_bot</div></div>
-            <div class="tabs"><div class="tab active">Чаты</div><div class="tab">Группы</div></div>
+            <div class="users-list" id="users"><div class="empty">Напишите боту @Artem_Komp_bot</div></div>
         </div>
         
         <div class="chat-screen" id="chat">
             <div class="chat-header">
                 <div class="back-btn" onclick="goBack()">←</div>
-                <div class="chat-avatar" id="ca">?</div>
-                <div class="chat-header-info"><div class="chat-name" id="cn">Чат</div><div class="chat-status">онлайн</div></div>
+                <div class="chat-name" id="cn">Чат</div>
             </div>
             <div class="messages" id="msgs"><div class="empty">Нет сообщений</div></div>
-            <div class="sticker-panel" id="stickerPanel"></div>
             <div class="input-bar">
-                <span class="attach-btn" onclick="toggleStickers()">😀</span>
-                <input class="msg-input" id="inp" placeholder="Сообщение" onkeypress="if(event.key==='Enter')send()">
-                <button class="send-btn" onclick="send()">➤</button>
+                <input id="inp" placeholder="Сообщение..." onkeypress="if(event.key==='Enter')sendMsg()">
+                <button class="send-btn" onclick="sendMsg()">➤</button>
             </div>
         </div>
     </div>
     <script>
         var T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
-        var A=["https://api.telegram.org/bot"+T,"https://149.154.167.220/bot"+T];
-        var ai=0,chats={},cur=null,lid=0,seen={},stickers=[];
+        var A="https://api.telegram.org/bot"+T;
+        var chats=JSON.parse(localStorage.getItem("c")||"{}");
+        var cur=localStorage.getItem("cur")||null;
+        var lid=parseInt(localStorage.getItem("lid")||"0");
+        var seen=JSON.parse(localStorage.getItem("seen")||"{}");
         
-        try{
-            var d=JSON.parse(localStorage.getItem("st"));
-            if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur;seen=d.seen||{};stickers=d.stickers||[]}
-        }catch(e){}
-        
-        function save(){localStorage.setItem("st",JSON.stringify({chats:chats,lid:lid,cur:cur,seen:seen,stickers:stickers}))}
+        function save(){localStorage.setItem("c",JSON.stringify(chats));localStorage.setItem("cur",cur||"");localStorage.setItem("lid",lid);localStorage.setItem("seen",JSON.stringify(seen))}
         
         function api(method,data,cb){
             var x=new XMLHttpRequest();
-            x.open(data?"POST":"GET",A[ai]+"/"+method);
+            x.open(data?"POST":"GET",A+"/"+method);
             if(data)x.setRequestHeader("Content-Type","application/json");
-            x.timeout=10000;
-            x.onload=function(){if(x.status==200)try{cb(JSON.parse(x.responseText))}catch(e){cb(null)}else{ai=(ai+1)%2;api(method,data,cb)}};
-            x.onerror=function(){ai=(ai+1)%2;api(method,data,cb)};
+            x.onload=function(){try{cb(JSON.parse(x.responseText))}catch(e){}};
+            x.onerror=function(){setTimeout(function(){api(method,data,cb)},2000)};
             x.send(data?JSON.stringify(data):null);
-        }
-        
-        function getFileUrl(fileId,cb){
-            api("getFile?file_id="+fileId,null,function(d){
-                if(d&&d.ok)cb("https://api.telegram.org/file/bot"+T+"/"+d.result.file_path);
-                else cb(null);
-            });
         }
         
         function update(){
             api("getUpdates?offset="+(lid+1)+"&timeout=10",null,function(d){
-                if(!d||!d.ok||!d.result)return;
+                if(!d||!d.result)return;
                 d.result.forEach(function(u){
                     lid=u.update_id;
                     var m=u.message||u.channel_post;
                     if(!m||seen[m.message_id])return;
                     seen[m.message_id]=true;
                     
-                    var id=String(m.chat.id),isG=m.chat.type=="group"||m.chat.type=="supergroup";
-                    if(!chats[id])chats[id]={name:isG?(m.chat.title||"Группа"):(m.chat.first_name||m.chat.username||"Контакт"),msgs:[],isGroup:isG};
+                    var id=String(m.chat.id);
+                    if(!chats[id])chats[id]={name:m.chat.first_name||m.chat.title||m.chat.username||"Контакт",msgs:[],isGroup:m.chat.type=="group"||m.chat.type=="supergroup"};
                     
-                    var msg={mid:m.message_id,date:m.date,type:"in",sender:isG?(m.from?m.from.first_name:""):null};
-                    
-                    if(m.sticker){
-                        msg.sticker=m.sticker.file_id;
-                        msg.emoji=m.sticker.emoji||"😀";
-                        // Сохраняем стикер
-                        if(!stickers.find(function(s){return s.file_id===m.sticker.file_id})){
-                            getFileUrl(m.sticker.file_id,function(url){
-                                if(url){
-                                    stickers.push({file_id:m.sticker.file_id,url:url,emoji:m.sticker.emoji||"😀"});
-                                    save();
-                                }
-                            });
-                        }
-                    }else if(m.text)msg.text=m.text;
-                    else if(m.photo)msg.text="🖼️ Фото";
-                    else if(m.video)msg.text="🎬 Видео";
-                    else if(m.voice)msg.text="🎤 Голосовое";
-                    else if(m.document)msg.text="📁 Файл";
+                    var msg={mid:m.message_id,date:m.date,type:"in",sender:chats[id].isGroup&&m.from?m.from.first_name:null};
+                    if(m.text)msg.text=m.text;
+                    else if(m.photo){msg.photo=m.photo[m.photo.length-1].file_id;msg.caption=m.caption||""}
+                    else if(m.sticker)msg.sticker=m.sticker.file_id;
+                    else if(m.video)msg.video=m.video.file_id;
+                    else if(m.voice)msg.voice=m.voice.file_id;
                     else return;
                     
                     chats[id].msgs.push(msg);
                 });
-                save();showUsers();if(cur)showChat()
+                save();showUsers();if(cur)showChat();
             });
         }
         
         function showUsers(){
-            var c=document.getElementById("users"),ids=Object.keys(chats);
-            ids.sort(function(a,b){var ma=chats[a].msgs,mb=chats[b].msgs;return (mb.length?mb[mb.length-1].date:0)-(ma.length?ma[ma.length-1].date:0)});
-            if(!ids.length){c.innerHTML='<div class="empty"><div class="empty-icon">💬</div>Напишите боту<br>@Artem_Komp_bot</div>';return}
+            var c=document.getElementById("users");
+            var ids=Object.keys(chats).sort(function(a,b){return (chats[b].msgs.length?chats[b].msgs[chats[b].msgs.length-1].date:0)-(chats[a].msgs.length?chats[a].msgs[chats[a].msgs.length-1].date:0)});
+            if(!ids.length){c.innerHTML='<div class="empty">Напишите боту @Artem_Komp_bot</div>';return}
             var h="";
             ids.forEach(function(id){
-                var u=chats[id],ms=u.msgs,last=ms[ms.length-1];
-                var time=last?new Date(last.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):"";
-                var txt=last?(last.text||(last.sticker?"😀 Стикер":"")):"";
-                h+='<div class="user" onclick="openChat(\''+id+'\')"><div class="user-avatar">'+(u.isGroup?"👥":u.name[0].toUpperCase())+'</div><div class="user-info"><div class="user-top"><div class="user-name">'+esc(u.name)+(u.isGroup?' <span style="font-size:10px;background:#4a90d9;color:#fff;padding:1px 5px;border-radius:4px;margin-left:4px">группа</span>':'')+'</div><div class="user-time">'+time+'</div></div><div class="user-msg">'+esc(txt.substring(0,30))+'</div></div></div>';
+                var u=chats[id],last=u.msgs[u.msgs.length-1];
+                var txt=last?(last.text||last.caption||(last.photo?"Фото":last.sticker?"Стикер":last.video?"Видео":last.voice?"Голосовое":"")):"";
+                h+='<div class="user" onclick="openChat(\''+id+'\')"><div class="avatar">'+(u.isGroup?"👥":u.name[0].toUpperCase())+'</div><div class="user-info"><div class="user-name">'+esc(u.name)+(u.isGroup?" 👥":"")+'</div><div class="user-last">'+esc(txt.substring(0,30))+'</div></div></div>';
             });
             c.innerHTML=h;
         }
         
-        function openChat(id){
-            cur=id;
-            document.getElementById("ca").textContent=chats[id].isGroup?"👥":chats[id].name[0].toUpperCase();
-            document.getElementById("cn").textContent=chats[id].name;
-            document.getElementById("chat").classList.add("open");
-            document.getElementById("contacts").classList.add("hidden");
-            document.getElementById("stickerPanel").classList.remove("show");
-            save();showChat();
-            setTimeout(function(){document.getElementById("inp").focus()},300);
-        }
+        function openChat(id){cur=id;document.getElementById("cn").textContent=chats[id].name;document.getElementById("chat").classList.add("open");document.getElementById("contacts").classList.add("hidden");save();showChat()}
+        function goBack(){document.getElementById("chat").classList.remove("open");document.getElementById("contacts").classList.remove("hidden");cur=null;save();showUsers()}
         
-        function goBack(){
-            document.getElementById("chat").classList.remove("open");
-            document.getElementById("contacts").classList.remove("hidden");
-            document.getElementById("stickerPanel").classList.remove("show");
-            cur=null;save();showUsers();
+        function getFile(fileId,cb){
+            api("getFile?file_id="+fileId,null,function(d){if(d&&d.ok)cb("https://api.telegram.org/file/bot"+T+"/"+d.result.file_path)});
         }
         
         function showChat(){
@@ -214,71 +139,19 @@
             var h="";
             ms.forEach(function(m){
                 var t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
-                var s=m.sender?'<div class="msg-sender">'+esc(m.sender)+'</div>':'';
-                var a=m.sender?'<div class="msg-avatar">'+m.sender[0].toUpperCase()+'</div>':'';
+                var s=m.sender?'<div class="sender">'+esc(m.sender)+'</div>':'';
                 var content="";
-                
-                if(m.sticker){
-                    getFileUrl(m.sticker,function(url){
-                        var img=document.getElementById("sticker_"+m.mid);
-                        if(img&&url)img.src=url;
-                    });
-                    content='<img id="sticker_'+m.mid+'" class="sticker" src="" alt="😀">';
-                }else{
-                    content=esc(m.text||"");
-                }
-                
-                h+='<div class="msg '+(m.type=="in"?"in":"out")+'">'+a+'<div class="bubble">'+s+content+'<div class="msg-time">'+t+'</div></div></div>';
+                if(m.text)content=esc(m.text).replace(/\n/g,"<br>");
+                else if(m.photo){content=(m.caption?esc(m.caption)+"<br>":"")+'<img id="img_'+m.mid+'" src="" style="max-width:200px">';setTimeout(function(){getFile(m.photo,function(url){var img=document.getElementById("img_"+m.mid);if(img&&url)img.src=url})},100)}
+                else if(m.sticker){content='<img id="st_'+m.mid+'" src="" style="width:100px;height:100px">';setTimeout(function(){getFile(m.sticker,function(url){var img=document.getElementById("st_"+m.mid);if(img&&url)img.src=url})},100)}
+                else if(m.video)content="🎬 Видео";
+                else if(m.voice)content="🎤 Голосовое";
+                h+='<div class="msg '+(m.type=="in"?"in":"out")+'"><div class="bubble">'+s+content+'<div class="time">'+t+'</div></div></div>';
             });
             c.innerHTML=h;c.scrollTop=c.scrollHeight;
-            
-            // Загружаем URL стикеров
-            ms.forEach(function(m){
-                if(m.sticker){
-                    getFileUrl(m.sticker,function(url){
-                        var img=document.getElementById("sticker_"+m.mid);
-                        if(img&&url)img.src=url;
-                    });
-                }
-            });
         }
         
-        function toggleStickers(){
-            var panel=document.getElementById("stickerPanel");
-            if(panel.classList.contains("show")){
-                panel.classList.remove("show");
-            }else{
-                showStickers();
-                panel.classList.add("show");
-            }
-        }
-        
-        function showStickers(){
-            var panel=document.getElementById("stickerPanel");
-            if(!stickers.length){
-                panel.innerHTML='<div class="sticker-empty">Нет стикеров. Отправьте стикер боту!</div>';
-                return;
-            }
-            var h="";
-            stickers.forEach(function(s,i){
-                h+='<div class="sticker-item" onclick="sendSticker('+i+')"><img src="'+s.url+'" alt="'+s.emoji+'"></div>';
-            });
-            panel.innerHTML=h;
-        }
-        
-        function sendSticker(index){
-            if(!cur||!stickers[index])return;
-            var s=stickers[index];
-            api("sendSticker",{chat_id:parseInt(cur),sticker:s.file_id},function(d){
-                if(d&&d.ok){
-                    chats[cur].msgs.push({mid:d.result.message_id,sticker:s.file_id,date:d.result.date,type:"out"});
-                    save();showChat();
-                }
-            });
-            document.getElementById("stickerPanel").classList.remove("show");
-        }
-        
-        function send(){
+        function sendMsg(){
             if(!cur)return;
             var t=document.getElementById("inp").value.trim();
             if(!t)return;
