@@ -2,164 +2,228 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <title>Telegram</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:Arial;background:#0e1621;color:#fff;height:100vh;display:flex}
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+            background:#000;display:flex;justify-content:center;align-items:center;
+            height:100vh;user-select:none;-webkit-user-select:none;
+        }
+        .app{width:100%;max-width:430px;height:100vh;background:#0e1621;position:relative;overflow:hidden}
         
-        .sidebar{width:300px;background:#17212b;display:flex;flex-direction:column;border-right:1px solid #1c2733}
-        .sidebar h2{padding:15px;background:#242f3d;font-size:18px;border-bottom:1px solid #1c2733}
-        .users{flex:1;overflow-y:auto}
+        .contacts-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:#0e1621;display:flex;flex-direction:column}
+        .contacts-screen.hidden{left:-100%}
+        
+        .header{background:#17212b;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1c2733}
+        .header h1{font-size:20px;font-weight:600}
+        
+        .users-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
         .user{
-            padding:12px 15px;display:flex;align-items:center;gap:10px;
+            padding:12px 14px;display:flex;align-items:center;gap:10px;
             cursor:pointer;border-bottom:1px solid rgba(255,255,255,.02);
+            transition:0.15s;
         }
         .user:active{background:#1e2c3a}
-        .user.active{background:#2b5278}
-        .av{
-            width:46px;height:46px;border-radius:50%;flex-shrink:0;
+        .user-avatar{
+            width:52px;height:52px;border-radius:50%;flex-shrink:0;
             background:linear-gradient(135deg,#5288c1,#6a5acd);
             display:flex;align-items:center;justify-content:center;
-            font-size:20px;font-weight:600;
+            font-size:22px;font-weight:600;
         }
         .user-info{flex:1;min-width:0}
-        .user-name{font-size:15px;font-weight:500}
-        .user-last{font-size:13px;color:#7f8fa4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .user-time{font-size:11px;color:#7f8fa4}
-        .unread{background:#5288c1;color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+        .user-top{display:flex;justify-content:space-between;align-items:baseline}
+        .user-name{font-size:16px;font-weight:500}
+        .user-time{font-size:12px;color:#7f8fa4}
+        .user-msg{
+            font-size:14px;color:#7f8fa4;margin-top:2px;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        .unread-badge{
+            background:#5288c1;color:#fff;font-size:11px;font-weight:600;
+            min-width:20px;height:20px;border-radius:10px;
+            display:flex;align-items:center;justify-content:center;
+            padding:0 5px;margin-left:5px;
+        }
+        .group-badge{
+            font-size:10px;background:#5288c1;color:#fff;
+            padding:1px 5px;border-radius:4px;margin-left:4px;
+        }
+        .tabs{
+            display:flex;background:#17212b;border-top:1px solid #1c2733;
+        }
+        .tab{
+            flex:1;text-align:center;padding:10px;color:#7f8fa4;
+            font-size:13px;cursor:pointer;
+        }
+        .tab.active{color:#5288c1;border-bottom:2px solid #5288c1}
         
-        .main{flex:1;display:flex;flex-direction:column}
-        .chat-header{background:#17212b;padding:10px 15px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1c2733}
-        .messages{flex:1;overflow-y:auto;padding:15px}
-        .msg{margin-bottom:8px}
-        .in .bubble{background:#182533;display:inline-block;max-width:70%;padding:8px 12px;border-radius:10px;font-size:15px;word-wrap:break-word}
-        .out{text-align:right}
-        .out .bubble{background:#2b5278;display:inline-block;max-width:70%;padding:8px 12px;border-radius:10px;font-size:15px;word-wrap:break-word}
-        .sender{font-size:11px;color:#5288c1;margin-bottom:2px}
-        .time{font-size:10px;color:rgba(255,255,255,.4);text-align:right;margin-top:2px}
-        .input-area{background:#17212b;padding:10px 15px;display:flex;gap:10px;border-top:1px solid #1c2733}
-        input{flex:1;padding:10px 15px;background:#242f3d;border:none;border-radius:20px;color:#fff;font-size:15px;outline:none}
-        button{width:42px;height:42px;border-radius:50%;background:#5288c1;border:none;color:#fff;font-size:20px;cursor:pointer}
-        .empty{text-align:center;color:#7f8fa4;padding:50px}
+        .chat-screen{position:absolute;top:0;left:100%;width:100%;height:100%;background:#0e1621;display:flex;flex-direction:column;transition:0.3s}
+        .chat-screen.open{left:0}
+        
+        .chat-header{background:#17212b;padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1c2733}
+        .back-btn{color:#5288c1;font-size:28px;cursor:pointer;width:32px;text-align:center}
+        .chat-avatar{
+            width:40px;height:40px;border-radius:50%;flex-shrink:0;
+            background:linear-gradient(135deg,#5288c1,#6a5acd);
+            display:flex;align-items:center;justify-content:center;
+            font-size:18px;font-weight:600;
+        }
+        .chat-header-info{flex:1}
+        .chat-name{font-size:16px;font-weight:600}
+        .chat-status{font-size:12px;color:#5288c1}
+        
+        .messages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px}
+        .msg{display:flex;margin:2px 0;align-items:flex-end;gap:4px}
+        .msg.in{justify-content:flex-start}
+        .msg.out{justify-content:flex-end}
+        .msg-avatar{
+            width:28px;height:28px;border-radius:50%;flex-shrink:0;
+            background:linear-gradient(135deg,#5288c1,#6a5acd);
+            display:flex;align-items:center;justify-content:center;
+            font-size:11px;font-weight:600;
+        }
+        .bubble{
+            max-width:75%;padding:8px 12px;border-radius:12px;
+            font-size:16px;word-wrap:break-word;line-height:1.4;
+        }
+        .in .bubble{background:#182533;border-bottom-left-radius:2px}
+        .out .bubble{background:#2b5278;border-bottom-right-radius:2px}
+        .msg-sender{font-size:12px;color:#5288c1;margin-bottom:2px}
+        .msg-time{font-size:11px;color:rgba(255,255,255,.4);text-align:right;margin-top:3px}
+        
+        .input-bar{background:#17212b;padding:8px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid #1c2733}
+        .msg-input{
+            flex:1;background:#242f3d;border:none;border-radius:20px;
+            padding:10px 14px;color:#fff;font-size:16px;outline:none;
+        }
+        .msg-input::placeholder{color:#7f8fa4}
+        .send-btn{
+            width:38px;height:38px;border-radius:50%;background:#5288c1;
+            border:none;color:#fff;font-size:18px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+        }
+        .send-btn:active{background:#6a9fd4}
+        
+        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#7f8fa4;text-align:center;padding:20px}
+        .empty-icon{font-size:50px;margin-bottom:10px}
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>💬 Чаты</h2>
-        <div class="users" id="users"><div class="empty">Ждем...</div></div>
-    </div>
-    <div class="main">
-        <div class="chat-header">
-            <div class="av" id="ha">?</div>
-            <div><div style="font-weight:500" id="hn">Выберите чат</div><div style="font-size:11px;color:#5288c1">онлайн</div></div>
+    <div class="app">
+        <!-- Контакты -->
+        <div class="contacts-screen" id="contacts">
+            <div class="header"><h1>Telegram</h1></div>
+            <div class="users-list" id="users"><div class="empty"><div class="empty-icon">💬</div>Напишите боту<br>@Artem_Komp_bot</div></div>
+            <div class="tabs">
+                <div class="tab active">Чаты</div>
+                <div class="tab">Группы</div>
+            </div>
         </div>
-        <div class="messages" id="msgs"><div class="empty">💬 Выберите чат</div></div>
-        <div class="input-area">
-            <input id="inp" placeholder="Сообщение..." onkeypress="if(event.key==='Enter')send()">
-            <button onclick="send()">➤</button>
+        
+        <!-- Чат -->
+        <div class="chat-screen" id="chat">
+            <div class="chat-header">
+                <div class="back-btn" onclick="goBack()">←</div>
+                <div class="chat-avatar" id="ca">?</div>
+                <div class="chat-header-info">
+                    <div class="chat-name" id="cn">Чат</div>
+                    <div class="chat-status">онлайн</div>
+                </div>
+            </div>
+            <div class="messages" id="msgs"><div class="empty">Нет сообщений</div></div>
+            <div class="input-bar">
+                <input class="msg-input" id="inp" placeholder="Сообщение" onkeypress="if(event.key==='Enter')send()">
+                <button class="send-btn" onclick="send()">➤</button>
+            </div>
         </div>
     </div>
     <script>
         var T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
-        var APIS=["https://api.telegram.org/bot"+T,"https://149.154.167.220/bot"+T];
+        var A=["https://api.telegram.org/bot"+T,"https://149.154.167.220/bot"+T];
         var ai=0,chats={},cur=null,lid=0,seen={};
         
-        try{var d=JSON.parse(localStorage.getItem("t2"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur;seen=d.seen||{}}}catch(e){}
-        function save(){localStorage.setItem("t2",JSON.stringify({chats:chats,lid:lid,cur:cur,seen:seen}))}
+        try{var d=JSON.parse(localStorage.getItem("mob"));if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur;seen=d.seen||{}}}catch(e){}
+        function save(){localStorage.setItem("mob",JSON.stringify({chats:chats,lid:lid,cur:cur,seen:seen}))}
         
         function api(method,data,cb){
             var x=new XMLHttpRequest();
-            x.open(data?"POST":"GET",APIS[ai]+"/"+method);
-            if(data){x.setRequestHeader("Content-Type","application/json")}
+            x.open(data?"POST":"GET",A[ai]+"/"+method);
+            if(data)x.setRequestHeader("Content-Type","application/json");
             x.timeout=10000;
-            x.onload=function(){
-                if(x.status==200){try{cb(JSON.parse(x.responseText))}catch(e){cb(null)}}
-                else{ai=(ai+1)%APIS.length;api(method,data,cb)}
-            };
-            x.onerror=function(){ai=(ai+1)%APIS.length;api(method,data,cb)};
+            x.onload=function(){if(x.status==200)try{cb(JSON.parse(x.responseText))}catch(e){cb(null)}else{ai=(ai+1)%2;api(method,data,cb)}};
+            x.onerror=function(){ai=(ai+1)%2;api(method,data,cb)};
             x.send(data?JSON.stringify(data):null);
         }
         
         function update(){
             api("getUpdates?offset="+(lid+1)+"&timeout=10",null,function(d){
-                if(d&&d.ok&&d.result){
-                    d.result.forEach(function(u){
-                        lid=u.update_id;
-                        var m=u.message||u.channel_post;
-                        if(!m)return;
-                        
-                        var id=String(m.chat.id);
-                        var mid=m.message_id;
-                        
-                        // Проверка на повтор
-                        if(seen[mid])return;
-                        seen[mid]=true;
-                        if(Object.keys(seen).length>1000){seen={};seen[mid]=true}
-                        
-                        var isG=m.chat.type=="group"||m.chat.type=="supergroup";
-                        
-                        if(!chats[id]){
-                            chats[id]={
-                                name:isG?(m.chat.title||"Группа"):(m.chat.first_name||m.chat.username||"Юзер"),
-                                msgs:[],isGroup:isG
-                            };
-                        }
-                        
-                        var msg={mid:mid,date:m.date,type:"in",sender:isG?(m.from?m.from.first_name:"Юзер"):null};
-                        if(m.text)msg.text=m.text;
-                        else if(m.photo)msg.text="🖼️ Фото";
-                        else if(m.video)msg.text="🎬 Видео";
-                        else if(m.voice)msg.text="🎤 Голосовое";
-                        else if(m.sticker)msg.text="😀 Стикер";
-                        else if(m.document)msg.text="📁 Файл";
-                        else return;
-                        
-                        chats[id].msgs.push(msg);
-                    });
-                    save();showUsers();if(cur)showChat()
-                }
+                if(!d||!d.ok||!d.result)return;
+                d.result.forEach(function(u){
+                    lid=u.update_id;
+                    var m=u.message||u.channel_post;
+                    if(!m||seen[m.message_id])return;
+                    seen[m.message_id]=true;
+                    
+                    var id=String(m.chat.id),isG=m.chat.type=="group"||m.chat.type=="supergroup";
+                    if(!chats[id])chats[id]={name:isG?(m.chat.title||"Группа"):(m.chat.first_name||m.chat.username||"Контакт"),msgs:[],isGroup:isG};
+                    
+                    var msg={mid:m.message_id,date:m.date,type:"in",sender:isG?(m.from?m.from.first_name:""):null};
+                    if(m.text)msg.text=m.text;
+                    else if(m.photo)msg.text="🖼️ Фото";
+                    else if(m.video)msg.text="🎬 Видео";
+                    else if(m.voice)msg.text="🎤 Голосовое";
+                    else if(m.sticker)msg.text="😀 Стикер";
+                    else if(m.document)msg.text="📁 Файл";
+                    else return;
+                    chats[id].msgs.push(msg);
+                });
+                save();showUsers();if(cur)showChat()
             });
         }
         
         function showUsers(){
-            var c=document.getElementById("users");
-            var ids=Object.keys(chats).sort(function(a,b){
-                var ma=chats[a].msgs,mb=chats[b].msgs;
-                return (mb.length?mb[mb.length-1].date:0)-(ma.length?ma[ma.length-1].date:0)
-            });
-            
-            if(!ids.length){c.innerHTML='<div class="empty">Напишите боту @Artem_Komp_bot</div>';return}
-            
+            var c=document.getElementById("users"),ids=Object.keys(chats);
+            ids.sort(function(a,b){var ma=chats[a].msgs,mb=chats[b].msgs;return (mb.length?mb[mb.length-1].date:0)-(ma.length?ma[ma.length-1].date:0)});
+            if(!ids.length){c.innerHTML='<div class="empty"><div class="empty-icon">💬</div>Напишите боту<br>@Artem_Komp_bot</div>';return}
             var h="";
             ids.forEach(function(id){
                 var u=chats[id],ms=u.msgs,last=ms[ms.length-1];
                 var time=last?new Date(last.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):"";
-                var txt=last?last.text:"";
-                h+='<div class="user'+(id==cur?" active":"")+'" onclick="openChat(\''+id+'\')"><div class="av">'+(u.isGroup?"👥":u.name[0].toUpperCase())+'</div><div class="user-info"><div class="user-name">'+esc(u.name)+(u.isGroup?' <span style="font-size:10px;background:#5288c1;color:#fff;padding:1px 5px;border-radius:4px">группа</span>':'')+'</div><div class="user-last">'+esc(txt.substring(0,25))+'</div></div><div class="user-time">'+time+'</div></div>';
+                h+='<div class="user" onclick="openChat(\''+id+'\')"><div class="user-avatar">'+(u.isGroup?"👥":u.name[0].toUpperCase())+'</div><div class="user-info"><div class="user-top"><div class="user-name">'+esc(u.name)+(u.isGroup?' <span class="group-badge">группа</span>':'')+'</div><div class="user-time">'+time+'</div></div><div class="user-msg">'+esc(last?last.text.substring(0,30):"")+'</div></div></div>';
             });
             c.innerHTML=h;
         }
         
         function openChat(id){
             cur=id;
-            document.getElementById("ha").textContent=chats[id].name[0].toUpperCase();
-            document.getElementById("hn").textContent=chats[id].name;
-            save();showChat();showUsers();
-            document.getElementById("inp").focus();
+            document.getElementById("ca").textContent=chats[id].isGroup?"👥":chats[id].name[0].toUpperCase();
+            document.getElementById("cn").textContent=chats[id].name;
+            document.getElementById("chat").classList.add("open");
+            document.getElementById("contacts").classList.add("hidden");
+            save();showChat();
+            setTimeout(function(){document.getElementById("inp").focus()},300);
+        }
+        
+        function goBack(){
+            document.getElementById("chat").classList.remove("open");
+            document.getElementById("contacts").classList.remove("hidden");
+            cur=null;save();showUsers();
         }
         
         function showChat(){
             var c=document.getElementById("msgs");
-            if(!cur||!chats[cur]){c.innerHTML='<div class="empty">💬 Выберите чат</div>';return}
+            if(!cur||!chats[cur])return;
             var ms=chats[cur].msgs;
             if(!ms.length){c.innerHTML='<div class="empty">Нет сообщений</div>';return}
-            
             var h="";
             ms.forEach(function(m){
                 var t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
-                var s=m.sender?'<div class="sender">'+esc(m.sender)+'</div>':'';
-                h+='<div class="msg '+(m.type=="in"?"in":"out")+'"><div class="bubble">'+s+esc(m.text)+'<div class="time">'+t+'</div></div></div>';
+                var s=m.sender?'<div class="msg-sender">'+esc(m.sender)+'</div>':'';
+                var a=m.sender?'<div class="msg-avatar">'+m.sender[0].toUpperCase()+'</div>':'';
+                h+='<div class="msg '+(m.type=="in"?"in":"out")+'">'+a+'<div class="bubble">'+s+esc(m.text)+'<div class="msg-time">'+t+'</div></div></div>';
             });
             c.innerHTML=h;c.scrollTop=c.scrollHeight
         }
@@ -170,11 +234,7 @@
             if(!t)return;
             document.getElementById("inp").value="";
             api("sendMessage",{chat_id:parseInt(cur),text:t},function(d){
-                if(d&&d.ok){
-                    if(!chats[cur])chats[cur]={name:"Чат",msgs:[],isGroup:false};
-                    chats[cur].msgs.push({mid:d.result.message_id,text:t,date:d.result.date,type:"out"});
-                    save();showChat()
-                }
+                if(d&&d.ok){chats[cur].msgs.push({mid:d.result.message_id,text:t,date:d.result.date,type:"out"});save();showChat()}
             });
         }
         
