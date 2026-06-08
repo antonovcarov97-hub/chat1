@@ -6,57 +6,74 @@
     <title>Telegram</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:Arial,sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;height:100vh}
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#000;display:flex;justify-content:center;align-items:center;height:100vh}
         .app{width:100%;max-width:430px;height:100vh;background:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
         
-        .screen{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column}
+        .screen{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column;transition:0.3s}
         .screen.hidden{left:-100%}
         
         .header{background:#f5f5f5;padding:12px 16px;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:10px}
         .header h1{font-size:20px;color:#000;margin:0;flex:1}
         .back-btn{color:#4a90d9;font-size:24px;cursor:pointer;font-weight:bold;display:none}
-        .settings-btn{background:none;border:none;font-size:22px;cursor:pointer}
+        .header-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:5px}
         
         .users-list{flex:1;overflow-y:auto}
         .user{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid #eee}
         .user:active{background:#f0f0f0}
-        .avatar{width:48px;height:48px;border-radius:50%;background:#4a90d9;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;flex-shrink:0;overflow:hidden}
-        .avatar img{width:100%;height:100%;object-fit:cover}
+        .user.selected{background:#e3f2fd}
+        .avatar{width:48px;height:48px;border-radius:50%;background:#4a90d9;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;flex-shrink:0}
         .user-info{flex:1;min-width:0}
         .user-name{font-size:15px;font-weight:500;color:#000}
         .user-last{font-size:13px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         
         .messages{flex:1;overflow-y:auto;padding:10px;background:#e5ddd5}
-        .msg{margin:5px 0}
+        .msg{margin:5px 0;position:relative}
+        .msg:active{background:rgba(0,0,0,0.05);border-radius:8px}
         .in .bubble{background:#fff;display:inline-block;max-width:75%;padding:8px 12px;border-radius:8px;font-size:15px;color:#000;word-wrap:break-word}
         .out{text-align:right}
         .out .bubble{background:#dcf8c6;display:inline-block;max-width:75%;padding:8px 12px;border-radius:8px;font-size:15px;color:#000;word-wrap:break-word}
         .sender{font-size:11px;color:#4a90d9;margin-bottom:2px}
         .time{font-size:10px;color:rgba(0,0,0,0.45);text-align:right;margin-top:2px}
         .bubble img{max-width:200px;max-height:200px;border-radius:6px;display:block;margin:3px 0}
+        .bubble video{max-width:200px;border-radius:6px;display:block;margin:3px 0}
+        .bubble audio{width:200px;margin:3px 0}
         
         .typing{font-size:12px;color:#4a90d9;padding:5px 15px;display:none}
         .typing.show{display:flex;align-items:center;gap:5px}
         .typing-dots{display:inline-flex;gap:3px}
         .typing-dots span{width:5px;height:5px;background:#4a90d9;border-radius:50%;animation:bounce 1.4s infinite}
-        .typing-dots span:nth-child(2){animation-delay:0.2s}
-        .typing-dots span:nth-child(3){animation-delay:0.4s}
+        .typing-dots span:nth-child(2){animation-delay:.2s}
+        .typing-dots span:nth-child(3){animation-delay:.4s}
         @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
         
         .input-bar{background:#f5f5f5;padding:8px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid #ddd}
         .input-bar input{flex:1;padding:10px;background:#fff;border:1px solid #ddd;border-radius:20px;font-size:15px;outline:none}
         .send-btn{background:#4a90d9;color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
+        .attach-btn{background:none;border:none;font-size:22px;cursor:pointer}
         
-        .settings-content{padding:20px}
-        .settings-avatar{width:80px;height:80px;border-radius:50%;background:#4a90d9;display:flex;align-items:center;justify-content:center;color:#fff;font-size:35px;font-weight:bold;margin:0 auto 20px;overflow:hidden;cursor:pointer;position:relative}
-        .settings-avatar img{width:100%;height:100%;object-fit:cover}
-        .settings-avatar .overlay{position:absolute;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.5);color:#fff;text-align:center;font-size:11px;padding:3px}
-        .settings-field{margin-bottom:15px}
-        .settings-field label{display:block;font-size:13px;color:#999;margin-bottom:5px}
-        .settings-field input{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;outline:none}
-        .save-btn{width:100%;padding:12px;background:#4a90d9;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;margin-top:10px}
-        .success{color:#4caf50;text-align:center;margin-top:10px;font-size:14px;display:none}
+        /* Меню действий */
+        .action-menu{position:absolute;bottom:60px;left:10px;background:#fff;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.2);padding:8px;display:none;z-index:10}
+        .action-menu.show{display:block}
+        .action-item{display:flex;align-items:center;gap:10px;padding:10px 15px;font-size:14px;cursor:pointer;border-radius:8px;color:#000}
+        .action-item:hover{background:#f0f0f0}
+        .action-item.delete{color:#f44336}
+        
+        /* Панель стикеров */
+        .sticker-panel{position:absolute;bottom:55px;left:0;width:100%;background:#fff;border-top:1px solid #ddd;display:none;flex-wrap:wrap;padding:10px;gap:5px;max-height:200px;overflow-y:auto;z-index:10}
+        .sticker-panel.show{display:flex}
+        .sticker-item{width:70px;height:70px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px}
+        .sticker-item:active{background:#f0f0f0}
+        .sticker-item img{max-width:60px;max-height:60px}
+        
         .empty{text-align:center;color:#999;padding:50px;font-size:15px}
+        
+        .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:100}
+        .modal.show{display:flex}
+        .modal-content{background:#fff;border-radius:15px;padding:20px;width:90%;max-width:300px;text-align:center}
+        .modal-content h3{font-size:18px;margin-bottom:15px}
+        .modal-content button{padding:10px 20px;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin:5px}
+        .modal-content .yes{background:#f44336;color:#fff}
+        .modal-content .no{background:#ddd;color:#000}
     </style>
 </head>
 <body>
@@ -65,7 +82,7 @@
         <div class="screen" id="contactsScreen">
             <div class="header">
                 <h1>Telegram</h1>
-                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+                <button class="header-btn" onclick="openSettings()">⚙️</button>
             </div>
             <div class="users-list" id="users"><div class="empty">Напишите боту @Artem_Komp_bot</div></div>
         </div>
@@ -75,47 +92,55 @@
             <div class="header">
                 <div class="back-btn" style="display:block" onclick="goBack()">←</div>
                 <h1 id="cn">Чат</h1>
+                <button class="header-btn" onclick="showChatMenu()">⋮</button>
             </div>
             <div class="typing" id="typing">печатает<div class="typing-dots"><span></span><span></span><span></span></div></div>
             <div class="messages" id="msgs"><div class="empty">Нет сообщений</div></div>
+            
+            <div class="action-menu" id="chatMenu">
+                <div class="action-item" onclick="clearChat()">🗑 Очистить чат</div>
+                <div class="action-item" onclick="deleteChat()">🚫 Удалить чат</div>
+                <div class="action-item" onclick="blockUser()">🚷 Заблокировать</div>
+                <div class="action-item" onclick="reportUser()">⚠️ Пожаловаться</div>
+                <div class="action-item" onclick="exportChat()">💾 Экспорт</div>
+            </div>
+            
+            <div class="sticker-panel" id="stickerPanel"></div>
+            
             <div class="input-bar">
+                <span class="attach-btn" onclick="showStickers()">😀</span>
+                <span class="attach-btn" onclick="sendPhoto()">📷</span>
+                <span class="attach-btn" onclick="sendFile()">📎</span>
                 <input id="inp" placeholder="Сообщение..." onkeypress="if(event.key==='Enter')sendMsg()" oninput="startTyping()">
                 <button class="send-btn" onclick="sendMsg()">➤</button>
             </div>
         </div>
-        
-        <!-- Настройки -->
-        <div class="screen hidden" id="settingsScreen">
-            <div class="header">
-                <div class="back-btn" style="display:block" onclick="closeSettings()">←</div>
-                <h1>Настройки</h1>
-            </div>
-            <div class="settings-content">
-                <div class="settings-avatar" onclick="document.getElementById('avatarInput').click()">
-                    <img id="settingsAvatarImg" style="display:none">
-                    <span id="settingsAvatarLetter">A</span>
-                    <div class="overlay">Сменить</div>
-                </div>
-                <input type="file" id="avatarInput" style="display:none" accept="image/*" onchange="changeAvatar(this)">
-                <div class="settings-field"><label>Имя бота</label><input id="botName" placeholder="Имя"></div>
-                <div class="settings-field"><label>Описание</label><input id="botBio" placeholder="О себе"></div>
-                <button class="save-btn" onclick="saveSettings()">Сохранить</button>
-                <div class="success" id="successMsg">✅ Сохранено!</div>
-            </div>
+    </div>
+    
+    <!-- Модальное окно подтверждения -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3 id="confirmText">Вы уверены?</h3>
+            <button class="yes" id="confirmYes">Да</button>
+            <button class="no" onclick="closeModal()">Отмена</button>
         </div>
     </div>
+    
+    <input type="file" id="photoInput" style="display:none" accept="image/*" onchange="uploadPhoto(this)">
+    <input type="file" id="fileInput" style="display:none" onchange="uploadFile(this)">
+
     <script>
         var T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
         var A="https://api.telegram.org/bot"+T;
-        var chats=JSON.parse(localStorage.getItem("cf")||"{}");
+        var chats=JSON.parse(localStorage.getItem("full")||"{}");
         var cur=localStorage.getItem("cur")||null;
         var lid=parseInt(localStorage.getItem("lid")||"0");
         var seen=JSON.parse(localStorage.getItem("seen")||"{}");
+        var stickers=JSON.parse(localStorage.getItem("stickers")||"[]");
         var typingTimer=null;
-        var botSettings=JSON.parse(localStorage.getItem("bs")||'{"name":"","bio":""}');
-        var botAvatar=localStorage.getItem("ba")||"";
+        var confirmCallback=null;
         
-        function save(){localStorage.setItem("cf",JSON.stringify(chats));localStorage.setItem("cur",cur||"");localStorage.setItem("lid",lid);localStorage.setItem("seen",JSON.stringify(seen))}
+        function save(){localStorage.setItem("full",JSON.stringify(chats));localStorage.setItem("cur",cur||"");localStorage.setItem("lid",lid);localStorage.setItem("seen",JSON.stringify(seen));localStorage.setItem("stickers",JSON.stringify(stickers))}
         
         function api(method,data,cb){
             var x=new XMLHttpRequest();
@@ -130,7 +155,6 @@
             if(!cur)return;
             clearTimeout(typingTimer);
             api("sendChatAction",{chat_id:parseInt(cur),action:"typing"},function(){});
-            typingTimer=setTimeout(function(){},5000);
         }
         
         function update(){
@@ -142,13 +166,16 @@
                     if(!m||seen[m.message_id])return;
                     seen[m.message_id]=true;
                     
-                    var id=String(m.chat.id);
-                    if(!chats[id])chats[id]={name:m.chat.first_name||m.chat.title||m.chat.username||"Контакт",msgs:[],isGroup:m.chat.type=="group"||m.chat.type=="supergroup"};
+                    var id=String(m.chat.id),isG=m.chat.type=="group"||m.chat.type=="supergroup";
+                    if(!chats[id])chats[id]={name:isG?(m.chat.title||"Группа"):(m.chat.first_name||m.chat.username||"Контакт"),msgs:[],isGroup:isG};
                     
-                    var msg={mid:m.message_id,date:m.date,type:"in",sender:chats[id].isGroup&&m.from?m.from.first_name:null};
+                    var msg={mid:m.message_id,date:m.date,type:"in",sender:isG&&m.from?m.from.first_name:null};
                     if(m.text)msg.text=m.text;
                     else if(m.photo)msg.photo=m.photo[m.photo.length-1].file_id;
-                    else if(m.sticker)msg.sticker=m.sticker.file_id;
+                    else if(m.video)msg.video=m.video.file_id;
+                    else if(m.voice)msg.voice=m.voice.file_id;
+                    else if(m.sticker){msg.sticker=m.sticker.file_id;if(!stickers.find(function(s){return s.file_id===m.sticker.file_id})){getFile(m.sticker.file_id,function(url){if(url)stickers.push({file_id:m.sticker.file_id,url:url,emoji:m.sticker.emoji||"😀"});save()})}}
+                    else if(m.document)msg.document=m.document.file_id;
                     else return;
                     
                     chats[id].msgs.push(msg);
@@ -163,12 +190,12 @@
             ids.sort(function(a,b){return (chats[b].msgs.length?chats[b].msgs[chats[b].msgs.length-1].date:0)-(chats[a].msgs.length?chats[a].msgs[chats[a].msgs.length-1].date:0)});
             if(!ids.length){c.innerHTML='<div class="empty">Напишите боту @Artem_Komp_bot</div>';return}
             var h="";
-            ids.forEach(function(id){var u=chats[id],last=u.msgs[u.msgs.length-1],txt=last?(last.text||(last.photo?"Фото":last.sticker?"Стикер":"")):"";h+='<div class="user" onclick="openChat(\''+id+'\')"><div class="avatar">'+(u.isGroup?"👥":u.name[0].toUpperCase())+'</div><div class="user-info"><div class="user-name">'+esc(u.name)+(u.isGroup?" 👥":"")+'</div><div class="user-last">'+esc(txt.substring(0,30))+'</div></div></div>'});
+            ids.forEach(function(id){var u=chats[id],last=u.msgs[u.msgs.length-1],txt=last?(last.text||(last.photo?"🖼️ Фото":last.sticker?"😀 Стикер":last.video?"🎬 Видео":last.voice?"🎤 Голосовое":last.document?"📁 Файл":"")):"";h+='<div class="user" onclick="openChat(\''+id+'\')"><div class="avatar">'+(u.isGroup?"👥":u.name[0].toUpperCase())+'</div><div class="user-info"><div class="user-name">'+esc(u.name)+(u.isGroup?" 👥":"")+'</div><div class="user-last">'+esc(txt.substring(0,30))+'</div></div></div>'});
             c.innerHTML=h;
         }
         
         function openChat(id){cur=id;document.getElementById("cn").textContent=chats[id].name;document.getElementById("chatScreen").classList.remove("hidden");document.getElementById("contactsScreen").classList.add("hidden");save();showChat()}
-        function goBack(){document.getElementById("chatScreen").classList.add("hidden");document.getElementById("contactsScreen").classList.remove("hidden");cur=null;save();showUsers()}
+        function goBack(){document.getElementById("chatScreen").classList.add("hidden");document.getElementById("contactsScreen").classList.remove("hidden");document.getElementById("chatMenu").classList.remove("show");cur=null;save();showUsers()}
         
         function getFile(fileId,cb){api("getFile?file_id="+fileId,null,function(d){if(d&&d.ok)cb("https://api.telegram.org/file/bot"+T+"/"+d.result.file_path)})}
         
@@ -178,7 +205,18 @@
             var ms=chats[cur].msgs;
             if(!ms.length){c.innerHTML='<div class="empty">Нет сообщений</div>';return}
             var h="";
-            ms.forEach(function(m){var t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});var s=m.sender?'<div class="sender">'+esc(m.sender)+'</div>':'';var content="";if(m.text)content=esc(m.text).replace(/\n/g,"<br>");else if(m.photo){content='<img id="img_'+m.mid+'" src="" style="max-width:200px">';setTimeout(function(){getFile(m.photo,function(url){var img=document.getElementById("img_"+m.mid);if(img&&url)img.src=url})},100)}else if(m.sticker){content='<img id="st_'+m.mid+'" src="" style="width:100px">';setTimeout(function(){getFile(m.sticker,function(url){var img=document.getElementById("st_"+m.mid);if(img&&url)img.src=url})},100)}h+='<div class="msg '+(m.type=="in"?"in":"out")+'"><div class="bubble">'+s+content+'<div class="time">'+t+'</div></div></div>'});
+            ms.forEach(function(m){
+                var t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+                var s=m.sender?'<div class="sender">'+esc(m.sender)+'</div>':'';
+                var content="";
+                if(m.text)content=esc(m.text).replace(/\n/g,"<br>");
+                else if(m.photo){content='<img id="img_'+m.mid+'" src="" style="max-width:200px">';setTimeout(function(){getFile(m.photo,function(url){var img=document.getElementById("img_"+m.mid);if(img&&url)img.src=url})},100)}
+                else if(m.sticker){content='<img id="st_'+m.mid+'" src="" style="width:100px">';setTimeout(function(){getFile(m.sticker,function(url){var img=document.getElementById("st_"+m.mid);if(img&&url)img.src=url})},100)}
+                else if(m.video){content='🎬 <video src="" controls style="max-width:200px">';setTimeout(function(){getFile(m.video,function(url){var v=document.querySelector("#msgs video:last-child");if(v&&url)v.src=url})},100)}
+                else if(m.voice){content='🎤 <audio src="" controls style="width:150px">';setTimeout(function(){getFile(m.voice,function(url){var a=document.querySelector("#msgs audio:last-child");if(a&&url)a.src=url})},100)}
+                else if(m.document)content='📁 Файл';
+                h+='<div class="msg '+(m.type=="in"?"in":"out")+'"><div class="bubble">'+s+content+'<div class="time">'+t+'</div></div></div>';
+            });
             c.innerHTML=h;c.scrollTop=c.scrollHeight;
         }
         
@@ -190,30 +228,77 @@
             api("sendMessage",{chat_id:parseInt(cur),text:t},function(d){if(d&&d.ok){chats[cur].msgs.push({mid:d.result.message_id,text:t,date:d.result.date,type:"out"});save();showChat()}});
         }
         
-        // Настройки
-        function openSettings(){
-            document.getElementById("settingsScreen").classList.remove("hidden");
-            document.getElementById("contactsScreen").classList.add("hidden");
-            document.getElementById("botName").value=botSettings.name||"";
-            document.getElementById("botBio").value=botSettings.bio||"";
-            if(botAvatar){document.getElementById("settingsAvatarImg").src=botAvatar;document.getElementById("settingsAvatarImg").style.display="block";document.getElementById("settingsAvatarLetter").style.display="none"}
-        }
-        function closeSettings(){document.getElementById("settingsScreen").classList.add("hidden");document.getElementById("contactsScreen").classList.remove("hidden");showUsers()}
-        function changeAvatar(input){
-            if(!input.files||!input.files[0])return;
-            var reader=new FileReader();
-            reader.onload=function(e){botAvatar=e.target.result;localStorage.setItem("ba",botAvatar);document.getElementById("settingsAvatarImg").src=botAvatar;document.getElementById("settingsAvatarImg").style.display="block";document.getElementById("settingsAvatarLetter").style.display="none";var form=new FormData();form.append("photo",input.files[0]);var x=new XMLHttpRequest();x.open("POST",A+"/setMyPhoto");x.send(form)};
-            reader.readAsDataURL(input.files[0]);
-        }
-        function saveSettings(){
-            var name=document.getElementById("botName").value.trim(),bio=document.getElementById("botBio").value.trim();
-            if(name)api("setMyName",{name:name},function(){});
-            if(bio)api("setMyDescription",{description:bio},function(){});
-            botSettings={name:name,bio:bio};localStorage.setItem("bs",JSON.stringify(botSettings));
-            document.getElementById("successMsg").style.display="block";setTimeout(function(){document.getElementById("successMsg").style.display="none"},2000);
+        // Меню чата
+        function showChatMenu(){document.getElementById("chatMenu").classList.toggle("show")}
+        
+        function clearChat(){
+            showConfirm("Очистить все сообщения?",function(){
+                if(cur&&chats[cur]){chats[cur].msgs=[];save();showChat()}
+                document.getElementById("chatMenu").classList.remove("show");
+            });
         }
         
+        function deleteChat(){
+            showConfirm("Удалить чат полностью?",function(){
+                if(cur){delete chats[cur];cur=null;save();goBack()}
+                document.getElementById("chatMenu").classList.remove("show");
+            });
+        }
+        
+        function blockUser(){alert("Пользователь заблокирован!");document.getElementById("chatMenu").classList.remove("show")}
+        function reportUser(){alert("Жалоба отправлена!");document.getElementById("chatMenu").classList.remove("show")}
+        
+        function exportChat(){
+            if(!cur||!chats[cur])return;
+            var text=chats[cur].msgs.map(function(m){var t=new Date(m.date*1000).toLocaleString();return "["+t+"] "+(m.sender?m.sender+": ":"")+(m.text||"[медиа]")}).join("\n");
+            var blob=new Blob([text],{type:"text/plain"});
+            var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="chat.txt";a.click();
+            document.getElementById("chatMenu").classList.remove("show");
+        }
+        
+        // Стикеры
+        function showStickers(){
+            var panel=document.getElementById("stickerPanel");
+            if(panel.classList.contains("show")){panel.classList.remove("show");return}
+            if(!stickers.length){panel.innerHTML='<div style="padding:20px;text-align:center;color:#999;width:100%">Нет стикеров</div>'}
+            else{panel.innerHTML=stickers.map(function(s,i){return '<div class="sticker-item" onclick="sendSticker('+i+')"><img src="'+s.url+'"></div>'}).join("")}
+            panel.classList.add("show");
+        }
+        
+        function sendSticker(i){
+            if(!cur||!stickers[i])return;
+            api("sendSticker",{chat_id:parseInt(cur),sticker:stickers[i].file_id},function(d){if(d&&d.ok){chats[cur].msgs.push({mid:d.result.message_id,sticker:stickers[i].file_id,date:d.result.date,type:"out"});save();showChat()}});
+            document.getElementById("stickerPanel").classList.remove("show");
+        }
+        
+        // Фото и файлы
+        function sendPhoto(){document.getElementById("photoInput").click()}
+        function sendFile(){document.getElementById("fileInput").click()}
+        
+        function uploadPhoto(input){
+            if(!cur||!input.files[0])return;
+            var form=new FormData();form.append("photo",input.files[0]);form.append("chat_id",cur);
+            var x=new XMLHttpRequest();x.open("POST",A+"/sendPhoto");x.onload=function(){update()};x.send(form);
+            input.value="";
+        }
+        
+        function uploadFile(input){
+            if(!cur||!input.files[0])return;
+            var form=new FormData();form.append("document",input.files[0]);form.append("chat_id",cur);
+            var x=new XMLHttpRequest();x.open("POST",A+"/sendDocument");x.onload=function(){update()};x.send(form);
+            input.value="";
+        }
+        
+        // Подтверждение
+        function showConfirm(text,cb){
+            document.getElementById("confirmText").textContent=text;
+            document.getElementById("confirmYes").onclick=function(){closeModal();if(cb)cb()};
+            document.getElementById("confirmModal").classList.add("show");
+        }
+        function closeModal(){document.getElementById("confirmModal").classList.remove("show")}
+        
         function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML}
+        
         showUsers();setInterval(update,2000);update();
     </script>
 </body>
