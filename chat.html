@@ -1,0 +1,459 @@
+<!-- telegram_complete.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#000;display:flex;justify-content:center;align-items:center;height:100vh}
+        .app{width:100%;max-width:430px;height:100vh;background:#0e1621;position:relative;overflow:hidden}
+        
+        .screen-contacts{position:absolute;top:0;left:0;width:100%;height:100%;background:#0e1621;display:flex;flex-direction:column;transition:0.3s}
+        .screen-contacts.hidden{left:-100%}
+        
+        .header{background:#17212b;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1c2733}
+        .header h1{font-size:20px;font-weight:600}
+        
+        .contacts-list{flex:1;overflow-y:auto}
+        .contacts-list::-webkit-scrollbar{width:0}
+        
+        .contact{padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.02)}
+        .contact:active{background:#1e2c3a}
+        
+        .avatar{width:52px;height:52px;border-radius:50%;flex-shrink:0;overflow:hidden;position:relative;background:linear-gradient(135deg,#5288c1,#6a5acd);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600}
+        .avatar img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
+        .avatar .letter{position:relative;z-index:1;color:#fff}
+        
+        .contact-info{flex:1;min-width:0}
+        .contact-row{display:flex;justify-content:space-between}
+        .contact-name{font-size:16px;font-weight:500}
+        .contact-time{font-size:12px;color:#7f8fa4}
+        .contact-msg{font-size:14px;color:#7f8fa4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        
+        .badge{font-size:10px;padding:1px 5px;border-radius:6px;margin-left:4px}
+        .badge-group{background:#5288c1;color:#fff}
+        .badge-channel{background:#f39c12;color:#fff}
+        
+        .screen-chat{position:absolute;top:0;left:100%;width:100%;height:100%;background:#0e1621;display:flex;flex-direction:column;transition:0.3s}
+        .screen-chat.open{left:0}
+        
+        .chat-header{background:#17212b;padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1c2733}
+        .back{color:#5288c1;font-size:28px;cursor:pointer;width:30px}
+        .chat-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#5288c1,#6a5acd);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;position:relative}
+        .chat-avatar img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
+        .chat-avatar .letter{position:relative;z-index:1;color:#fff}
+        .chat-name{font-size:16px;font-weight:600}
+        .chat-status{font-size:11px;color:#5288c1}
+        
+        .admin-panel{background:#1c2733;padding:8px 12px;display:none;gap:8px;flex-wrap:wrap}
+        .admin-panel.show{display:flex}
+        .admin-btn{background:#5288c1;color:#fff;border:none;padding:6px 12px;border-radius:15px;font-size:12px;cursor:pointer}
+        .admin-btn:hover{background:#6a9fd4}
+        
+        .messages{flex:1;overflow-y:auto;padding:10px 12px}
+        .messages::-webkit-scrollbar{width:0}
+        
+        .msg{display:flex;margin:3px 0;align-items:flex-end;gap:4px}
+        .msg.in{justify-content:flex-start}
+        .msg.out{justify-content:flex-end}
+        .msg-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#5288c1,#6a5acd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+        
+        .bubble{max-width:70%;padding:7px 10px;border-radius:10px;font-size:15px;word-wrap:break-word;overflow:hidden}
+        .in .bubble{background:#182533;border-bottom-left-radius:2px}
+        .out .bubble{background:#2b5278;border-bottom-right-radius:2px}
+        .bubble img{max-width:100%;border-radius:8px;margin:3px 0;display:block}
+        .bubble .sticker{width:120px;height:120px}
+        .bubble video{max-width:100%;border-radius:8px;margin:3px 0}
+        .bubble audio{width:200px;margin:3px 0}
+        
+        .msg-sender{font-size:11px;color:#5288c1;margin-bottom:1px}
+        .msg-time{font-size:10px;color:rgba(255,255,255,0.4);text-align:right;margin-top:3px}
+        
+        .system-msg{text-align:center;padding:5px;color:#7f8fa4;font-size:12px}
+        
+        .input-bar{background:#17212b;padding:6px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid #1c2733}
+        .attach-btn{color:#7f8fa4;font-size:22px;cursor:pointer}
+        .input-bar input{flex:1;background:#242f3d;border:none;border-radius:18px;padding:9px 14px;color:#fff;font-size:15px;outline:none}
+        .input-bar input::placeholder{color:#7f8fa4}
+        .send-btn{width:36px;height:36px;border-radius:50%;background:#5288c1;border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        
+        .action-menu{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#17212b;border-radius:15px;padding:10px;display:none;gap:12px;z-index:50}
+        .action-menu.show{display:flex}
+        .action-item{text-align:center;color:#fff;font-size:12px;cursor:pointer;padding:8px 10px;border-radius:10px}
+        .action-item:hover{background:#242f3d}
+        .action-item .icon{font-size:26px;margin-bottom:3px}
+        
+        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#7f8fa4;text-align:center}
+        .empty .icon{font-size:50px;margin-bottom:10px}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="screen-contacts" id="contactsScreen">
+            <div class="header"><h1>Все чаты</h1></div>
+            <div class="contacts-list" id="contactsList">
+                <div class="empty"><div class="icon">💬</div><p>Напишите боту @Artem_Komp_bot</p></div>
+            </div>
+        </div>
+        
+        <div class="screen-chat" id="chatScreen">
+            <div class="chat-header">
+                <div class="back" onclick="closeChat()">←</div>
+                <div class="chat-avatar" id="cAvatar">
+                    <img id="cAvatarImg" style="display:none">
+                    <span class="letter" id="cAvatarLetter">A</span>
+                </div>
+                <div>
+                    <div class="chat-name" id="cName">Чат</div>
+                    <div class="chat-status" id="cStatus">онлайн</div>
+                </div>
+            </div>
+            <div class="admin-panel" id="adminPanel">
+                <button class="admin-btn" onclick="sendPost()">📝 Пост</button>
+                <button class="admin-btn" onclick="pinMessage()">📌 Закрепить</button>
+                <button class="admin-btn" onclick="deleteLast()">🗑 Удалить</button>
+                <button class="admin-btn" onclick="getChatInfo()">ℹ️ Инфо</button>
+            </div>
+            <div class="messages" id="messages">
+                <div class="empty"><div style="font-size:60px;margin-bottom:10px">✈️</div><div>Нет сообщений</div></div>
+            </div>
+            <div class="input-bar">
+                <span class="attach-btn" onclick="toggleMenu()">📎</span>
+                <input id="msgInput" placeholder="Сообщение" onkeypress="if(event.key==='Enter')sendMsg()">
+                <div class="send-btn" onclick="sendMsg()">➤</div>
+            </div>
+            <div class="action-menu" id="actionMenu">
+                <div class="action-item" onclick="sendMedia('photo')"><div class="icon">🖼️</div>Фото</div>
+                <div class="action-item" onclick="sendMedia('video')"><div class="icon">🎬</div>Видео</div>
+                <div class="action-item" onclick="sendMedia('voice')"><div class="icon">🎤</div>Голос</div>
+                <div class="action-item" onclick="sendSticker()"><div class="icon">😀</div>Стикер</div>
+                <div class="action-item" onclick="sendMedia('document')"><div class="icon">📁</div>Файл</div>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="fileInput" style="display:none">
+
+    <script>
+        const T="8953225877:AAFjsj8bJgMni7EkAM0L2w36xBBRR2tdDv8";
+        const A="https://api.telegram.org/bot"+T;
+        let chats={},cur=null,lid=0,mediaType=null;
+        let stickers=[]; // Хранилище стикеров
+        
+        try{
+            const d=JSON.parse(localStorage.getItem("tg_full2"));
+            if(d){chats=d.chats||{};lid=d.lid||0;cur=d.cur;stickers=d.stickers||[]}
+        }catch(e){}
+        function save(){localStorage.setItem("tg_full2",JSON.stringify({chats:chats,lid:lid,cur:cur,stickers:stickers}))}
+        
+        function isDuplicate(chatId,messageId){return chats[chatId]?.msgs.some(m=>m.messageId===messageId)}
+        
+        async function loadAvatar(chatId,imgEl,letterEl){
+            try{
+                const r=await fetch(A+"/getChat?chat_id="+chatId);
+                const d=await r.json();
+                if(d.ok&&d.result.photo){
+                    const fr=await fetch(A+"/getFile?file_id="+d.result.photo.small_file_id);
+                    const fd=await fr.json();
+                    if(fd.ok){
+                        imgEl.src="https://api.telegram.org/file/bot"+T+"/"+fd.result.file_path;
+                        imgEl.style.display="block";
+                        letterEl.style.display="none";
+                    }
+                }
+            }catch(e){}
+        }
+        
+        function update(){
+            fetch(A+"/getUpdates?offset="+(lid+1)+"&timeout=10")
+            .then(r=>r.json()).then(d=>{
+                if(d.ok&&d.result.length){
+                    d.result.forEach(u=>{
+                        lid=u.update_id;
+                        const m=u.message||u.channel_post;
+                        if(!m)return;
+                        
+                        const id=String(m.chat.id);
+                        if(isDuplicate(id,m.message_id))return;
+                        
+                        const isGroup=m.chat.type==="group"||m.chat.type==="supergroup";
+                        const isChannel=m.chat.type==="channel";
+                        
+                        if(!chats[id]){
+                            chats[id]={
+                                user:{
+                                    id:m.chat.id,
+                                    name:isChannel?(m.chat.title||"Канал"):isGroup?(m.chat.title||"Группа"):(m.chat.first_name||"Контакт"),
+                                    isGroup,isChannel,isAdmin:false
+                                },
+                                msgs:[]
+                            };
+                            loadAvatar(m.chat.id,
+                                document.getElementById("avimg_"+id),
+                                document.getElementById("avlet_"+id));
+                        }
+                        
+                        let msgData={messageId:m.message_id,date:m.date,type:"in"};
+                        
+                        if(m.text){
+                            msgData.text=m.text;
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||m.author_signature||""):null;
+                        }else if(m.photo){
+                            msgData.photo=m.photo[m.photo.length-1].file_id;
+                            msgData.caption=m.caption||"";
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||""):null;
+                        }else if(m.video){
+                            msgData.video=m.video.file_id;
+                            msgData.caption=m.caption||"";
+                            msgData.sender=isGroup||isChannel?(m.from?.first_name||""):null;
+                        }else if(m.voice){msgData.voice=m.voice.file_id}
+                        else if(m.video_note){msgData.videoNote=m.video_note.file_id}
+                        else if(m.document){msgData.document=m.document.file_id;msgData.docName=m.document.file_name||"Файл"}
+                        else if(m.sticker){
+                            msgData.sticker=m.sticker.file_id;
+                            // Сохраняем стикер
+                            if(!stickers.find(s=>s.file_id===m.sticker.file_id)){
+                                stickers.push({file_id:m.sticker.file_id,emoji:m.sticker.emoji||"😀"});
+                            }
+                        }else if(m.animation){msgData.animation=m.animation.file_id}
+                        else{return}
+                        
+                        chats[id].msgs.push(msgData);
+                    });
+                    save();showContacts();if(cur){showChat();checkAdmin()}
+                }
+            }).catch(()=>{});
+        }
+        
+        function showContacts(){
+            const c=document.getElementById("contactsList");
+            const ids=Object.keys(chats).sort((a,b)=>{
+                const ma=chats[a].msgs,mb=chats[b].msgs;
+                return (mb.length?mb[mb.length-1].date:0)-(ma.length?ma[ma.length-1].date:0)
+            });
+            
+            if(!ids.length){
+                c.innerHTML='<div class="empty"><div class="icon">💬</div><p>Напишите боту @Artem_Komp_bot</p></div>';
+                return;
+            }
+            
+            let h="";
+            ids.forEach(id=>{
+                const u=chats[id].user,m=chats[id].msgs;
+                const last=m[m.length-1];
+                const txt=last?(last.text||last.caption||(last.photo?"🖼️ Фото":last.video?"🎬 Видео":last.voice?"🎤 Голосовое":last.sticker?"😀 Стикер":last.videoNote?"🎥 Кружок":"📎 Файл")):"";
+                let badge="";
+                if(u.isChannel)badge='<span class="badge badge-channel">канал</span>';
+                else if(u.isGroup)badge='<span class="badge badge-group">группа</span>';
+                
+                h+=`<div class="contact" onclick="openChat('${id}')">
+                    <div class="avatar" id="av_${id}">
+                        <img id="avimg_${id}" style="display:none">
+                        <span class="letter" id="avlet_${id}">${u.isChannel?"📢":u.isGroup?"👥":u.name[0].toUpperCase()}</span>
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-row">
+                            <div class="contact-name">${esc(u.name)}${badge}</div>
+                            <div class="contact-time">${last?new Date(last.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}):""}</div>
+                        </div>
+                        <div class="contact-msg">${esc(txt.substring(0,30))}</div>
+                    </div>
+                </div>`;
+            });
+            c.innerHTML=h;
+        }
+        
+        function openChat(id){
+            cur=id;const u=chats[id].user;
+            loadAvatar(id,document.getElementById("cAvatarImg"),document.getElementById("cAvatarLetter"));
+            document.getElementById("cAvatarLetter").textContent=u.isChannel?"📢":u.isGroup?"👥":u.name[0].toUpperCase();
+            document.getElementById("cName").textContent=u.name;
+            document.getElementById("cStatus").textContent=u.isChannel?"канал":u.isGroup?"группа":"онлайн";
+            document.getElementById("chatScreen").classList.add("open");
+            document.getElementById("contactsScreen").classList.add("hidden");
+            save();showChat();checkAdmin();
+            setTimeout(()=>document.getElementById("msgInput").focus(),300);
+        }
+        
+        function closeChat(){
+            document.getElementById("chatScreen").classList.remove("open");
+            document.getElementById("contactsScreen").classList.remove("hidden");
+            document.getElementById("adminPanel").classList.remove("show");
+            cur=null;save();showContacts();
+        }
+        
+        async function checkAdmin(){
+            if(!cur||!chats[cur])return;
+            const u=chats[cur].user;
+            
+            // Проверяем права бота в чате
+            try{
+                const r=await fetch(A+"/getChatMember?chat_id="+cur+"&user_id="+T.split(":")[0]);
+                const d=await r.json();
+                if(d.ok&&d.result.status==="administrator"){
+                    chats[cur].user.isAdmin=true;
+                    document.getElementById("adminPanel").classList.add("show");
+                }else{
+                    document.getElementById("adminPanel").classList.remove("show");
+                }
+            }catch(e){
+                // Если канал - показываем панель
+                if(u.isChannel){
+                    chats[cur].user.isAdmin=true;
+                    document.getElementById("adminPanel").classList.add("show");
+                }
+            }
+        }
+        
+        async function getFileUrl(fileId){
+            const r=await fetch(A+"/getFile?file_id="+fileId);
+            const d=await r.json();
+            return d.ok?"https://api.telegram.org/file/bot"+T+"/"+d.result.file_path:null;
+        }
+        
+        async function showChat(){
+            const c=document.getElementById("messages");
+            if(!cur||!chats[cur])return;
+            const msgs=chats[cur].msgs;
+            if(!msgs.length){c.innerHTML='<div class="empty"><div style="font-size:60px;margin-bottom:10px">✈️</div><div>Нет сообщений</div></div>';return}
+            
+            let h="";
+            for(const m of msgs){
+                const t=new Date(m.date*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+                const cls=m.type==="in"?"in":"out";
+                const sender=m.sender?`<div class="msg-sender">${esc(m.sender)}</div>`:"";
+                const avatar=m.sender?`<div class="msg-avatar">${m.sender[0].toUpperCase()}</div>`:"";
+                
+                let content="";
+                if(m.text)content=esc(m.text).replace(/\n/g,"<br>");
+                else if(m.photo){
+                    const url=await getFileUrl(m.photo);
+                    content=(m.caption?esc(m.caption)+"<br>":"")+(url?`<img src="${url}" loading="lazy">`:"🖼️");
+                }else if(m.video){
+                    const url=await getFileUrl(m.video);
+                    content=(m.caption?esc(m.caption)+"<br>":"")+(url?`<video src="${url}" controls></video>`:"🎬");
+                }else if(m.voice){
+                    const url=await getFileUrl(m.voice);
+                    content=url?`🎤 <audio src="${url}" controls></audio>`:"🎤";
+                }else if(m.sticker){
+                    const url=await getFileUrl(m.sticker);
+                    content=url?`<img src="${url}" class="sticker">`:"😀";
+                }else if(m.videoNote){
+                    const url=await getFileUrl(m.videoNote);
+                    content=url?`<video src="${url}" controls style="width:120px;border-radius:50%"></video>`:"🎥";
+                }else if(m.document){content=`📁 ${esc(m.docName||"Файл")}`}
+                else if(m.animation){
+                    const url=await getFileUrl(m.animation);
+                    content=url?`<img src="${url}">`:"🎞️";
+                }
+                
+                h+=`<div class="msg ${cls}">${avatar}<div class="bubble">${sender}${content}<div class="msg-time">${t}</div></div></div>`;
+            }
+            c.innerHTML=h;c.scrollTop=c.scrollHeight
+        }
+        
+        function sendMsg(){
+            if(!cur)return;
+            const t=document.getElementById("msgInput").value.trim();
+            if(!t)return;
+            document.getElementById("msgInput").value="";
+            fetch(A+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:parseInt(cur),text:t})})
+            .then(r=>r.json()).then(d=>{
+                if(d.ok){
+                    chats[cur].msgs.push({messageId:d.result.message_id,text:t,date:d.result.date,type:"out"});
+                    save();showChat();
+                }
+            });
+        }
+        
+        // АДМИН-ФУНКЦИИ
+        async function sendPost(){
+            if(!cur)return;
+            const text=prompt("Текст поста:");
+            if(!text)return;
+            try{
+                await fetch(A+"/sendMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:"@"+chats[cur].user.username||cur,text:text})});
+                update();showChat();
+            }catch(e){alert("Ошибка")}
+        }
+        
+        async function pinMessage(){
+            if(!cur)return;
+            const msgs=chats[cur].msgs.filter(m=>m.messageId);
+            if(!msgs.length){alert("Нет сообщений для закрепления");return}
+            const lastId=msgs[msgs.length-1].messageId;
+            try{
+                await fetch(A+"/pinChatMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:parseInt(cur),message_id:lastId})});
+                alert("✅ Закреплено!");
+            }catch(e){alert("Ошибка")}
+        }
+        
+        async function deleteLast(){
+            if(!cur)return;
+            const msgs=chats[cur].msgs.filter(m=>m.messageId);
+            if(!msgs.length){alert("Нет сообщений");return}
+            const lastId=msgs[msgs.length-1].messageId;
+            try{
+                await fetch(A+"/deleteMessage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:parseInt(cur),message_id:lastId})});
+                chats[cur].msgs=chats[cur].msgs.filter(m=>m.messageId!==lastId);
+                save();showChat();
+            }catch(e){alert("Ошибка")}
+        }
+        
+        async function getChatInfo(){
+            if(!cur)return;
+            try{
+                const r=await fetch(A+"/getChat?chat_id="+cur);
+                const d=await r.json();
+                if(d.ok)alert("Название: "+d.result.title+"\nТип: "+d.result.type+"\nУчастников: "+(d.result.member_count||"неизвестно"));
+            }catch(e){alert("Ошибка")}
+        }
+        
+        // МЕДИА
+        function toggleMenu(){document.getElementById("actionMenu").classList.toggle("show")}
+        function sendMedia(type){mediaType=type;document.getElementById("fileInput").click()}
+        
+        function sendSticker(){
+            if(stickers.length>0){
+                const stickerList=stickers.map((s,i)=>`${i}: ${s.emoji}`).join("\n");
+                const idx=prompt("Стикеры:\n"+stickerList+"\nВведите номер:");
+                if(idx!==null&&stickers[parseInt(idx)]){
+                    sendStickerById(stickers[parseInt(idx)].file_id);
+                }
+            }else{
+                alert("Нет сохраненных стикеров. Отправьте стикер боту!");
+            }
+        }
+        
+        async function sendStickerById(fileId){
+            if(!cur)return;
+            try{
+                await fetch(A+"/sendSticker",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:parseInt(cur),sticker:fileId})});
+                update();showChat();
+            }catch(e){alert("Ошибка")}
+        }
+        
+        document.getElementById("fileInput").addEventListener("change",async function(){
+            if(!cur||!this.files.length)return;
+            const file=this.files[0];
+            const form=new FormData();
+            form.append(mediaType,file);
+            form.append("chat_id",cur);
+            
+            try{
+                const r=await fetch(A+"/send"+mediaType.charAt(0).toUpperCase()+mediaType.slice(1),{method:"POST",body:form});
+                const d=await r.json();
+                if(d.ok){update();showChat()}
+            }catch(e){}
+            
+            this.value="";
+            document.getElementById("actionMenu").classList.remove("show");
+        });
+        
+        function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
+        
+        showContacts();setInterval(update,2000);update();
+    </script>
+</body>
+</html>
